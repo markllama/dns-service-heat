@@ -1,0 +1,9 @@
+== DNS Service for OpenStack with Heat
+
+This repository defines a simple distributed DNS service within an
+OpenStack Heat stack.  The goal is to de-mystify DNS services and
+deployments for low level delegated sub-domains.  It is NOT to provide
+enterprise scale and quality DNS services.
+
+== Inputs
+
