@@ -68,11 +68,18 @@ parameters:
     constraints:
     - custom_constraint: nova.keypair
 
-  slave_count:
-    type: number
+  slave_security_group:
     description: >
-      Number of slave servers to create.
-    default: 1
+      Define network access to DNS slave servers
+      ICMP, SSH, and DNS (TCP and UDP) allowed
+    type: string
+    constraints:
+      - custom_constraint: neutron.security_group
+
+  slave_server_group:
+    description: >
+      ID of a server group containing all of the slave hosts
+    type: string
 
 resources:
 
@@ -92,8 +99,8 @@ resources:
       key_name: {get_param: ssh_key_name}
       networks:
       - port: {get_resource: port}
-#      scheduler_hints:
-#        group: {get_param: slave_server_group}
+      scheduler_hints:
+        group: {get_param: slave_server_group}
 #      user_data_format: SOFTWARE_CONFIG
 #      user_data: {get_resource: init}
 
@@ -101,7 +108,7 @@ resources:
     type: OS::Neutron::Port
     properties:
       security_groups:
-      - {get_resource: slave_security_group}
+      - {get_param: slave_security_group}
       network: {get_param: service_network}
       fixed_ips:
       - subnet: {get_param: service_subnet}
@@ -112,25 +119,4 @@ resources:
     properties:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
-
-  slave_security_group:
-    description: >
-      Define network access to DNS slave servers
-      ICMP, SSH, and DNS (TCP and UDP) allowed
-    type: OS::Neutron::SecurityGroup
-    properties:
-      rules:
-        - protocol: icmp
-        - direction: ingress
-          protocol: tcp
-          port_range_min: 22
-          port_range_max: 22
-        - direction: ingress
-          protocol: tcp
-          port_range_min: 53
-          port_range_max: 53
-        - direction: ingress
-          protocol: udp
-          port_range_min: 53
-          port_range_max: 53
 

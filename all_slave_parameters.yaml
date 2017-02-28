@@ -1,0 +1,11 @@
+parameters:
+  external_network: public_network
+  service_network: dns-net-service_network-wkcpxqgqc5bq
+  service_subnet: dns-net-service_subnet-7jqkrxluan3f
+  image: rhel7
+  flavor: m1.small
+  hostname_prefix: ns
+  domain_name: heat.e2e.bos.redhat.com
+  ssh_user: cloud-user
+  ssh_key_name: ocp3
+  slave_count: 3

@@ -1,7 +1,7 @@
 heat_template_version: 2016-10-14
 
 description:
-  An instance for a DNS master server
+  An instance for a DNS slave server
   The instances are created with Heat and then configured with Ansible
 
 parameters:
@@ -27,7 +27,7 @@ parameters:
     type: string
     constraints:
     - custom_constraint: neutron.subnet
-      
+
   image:
     description: >
       The Glance image to use as a base for DNS servers
@@ -43,11 +43,11 @@ parameters:
     constraints:
       - custom_constraint: nova.flavor
 
-  hostname:
+  hostname_prefix:
     description: >
       The Infrastructure hostname portion of the FQDN
     type: string
-    default: "ns-master"
+    default: "ns"
     constraints:
     - allowed_pattern: '[a-z0-9\-]*'
       description: Hostname must contain only characters [a-z0-9\-].
@@ -69,46 +69,27 @@ parameters:
     constraints:
     - custom_constraint: nova.keypair
 
+  slave_count:
+    type: number
+    description: >
+      Number of slave servers to create.
+    default: 1
+
+  slave_server_group_policies:
+    type: comma_delimited_list
+    description: >
+      List of policies applied on slave server ServerGroup. By default
+      'anti-affinity' policy is used to make sure that each master node
+      is deployed on a different host. If you use a small/all-in-one openstack
+      environment, you may need to disable this e.g. by passing
+      '-P master_server_group_policies=affinity'.
+    default: ['anti-affinity']
 
 resources:
-  # A VM to provide host based orchestration and other sub-services
-  host:
-    type: OS::Nova::Server
-    properties:
-      name:
-        str_replace:
-          template: "HOST.DOMAIN"
-          params:
-            HOST: {get_param: hostname}
-            DOMAIN: {get_param: domain_name}
-      admin_user: {get_param: ssh_user}
-      image: {get_param: image}
-      flavor: {get_param: flavor}
-      key_name: {get_param: ssh_key_name}
-      networks:
-      - port: {get_resource: port}
-#      user_data_format: SOFTWARE_CONFIG
-#      user_data: {get_resource: init}
   
-  port:
-    type: OS::Neutron::Port
-    properties:
-      security_groups:
-      - {get_resource: master_security_group}
-      network: {get_param: service_network}
-      fixed_ips:
-      - subnet: {get_param: service_subnet}
-      replacement_policy: AUTO
-
-  floating_ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network: {get_param: external_network}
-      port_id: {get_resource: port}
-
-  master_security_group:
+  slave_security_group:
     description: >
-      Define network access to DNS master servers
+      Define network access to DNS slave servers
       ICMP, SSH, and DNS (TCP and UDP) allowed
     type: OS::Neutron::SecurityGroup
     properties:
@@ -126,4 +107,34 @@ resources:
           protocol: udp
           port_range_min: 53
           port_range_max: 53
+
+  dns_slaves:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: slave_count}
+      resource_def:
+        type: bind-slave.yaml
+        properties:
+          external_network: {get_param: external_network}
+          service_network: {get_param: service_network}
+          service_subnet: {get_param: service_subnet}
+          slave_server_group: {get_resource: slave_server_group}
+          slave_security_group: {get_resource: slave_security_group} 
+          image: {get_param: image}
+          flavor: {get_param: flavor}
+          hostname:
+            str_replace:
+              template: "%hostname_prefix%%index%"
+              params:
+                "%hostname_prefix%": {get_param: hostname_prefix}
+          domain_name: {get_param: domain_name}
+          ssh_user: {get_param: ssh_user}
+          ssh_key_name: {get_param: ssh_key_name}
+
+  # OpenShift web and REST API network controls
+  slave_server_group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: slave_server_group
+      policies: {get_param: slave_server_group_policies}     
 
