@@ -1,4 +1,5 @@
 parameters:
+  external_network: public_network
   service_network: dns-net-service_network-wkcpxqgqc5bq
   service_subnet: dns-net-service_subnet-7jqkrxluan3f
   slave_count: 3

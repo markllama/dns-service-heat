@@ -17,6 +17,14 @@ parameters:
     type: string
     default: "ns"
 
+      # Connectivity
+  external_network:
+    type: string
+    description: >
+      The external network that provides floating IP addresses for the nodes
+    constraints:
+    - custom_constraint: neutron.network
+
   service_network:
     description: >
       The name or ID of the internal network
@@ -50,6 +58,7 @@ resources:
       resource_def:
         type: one_slave.yaml
         properties:
+          external_network: {get_param: external_network}
           service_network: {get_param: service_network}
           service_subnet: {get_param: service_subnet}
           hostname:
