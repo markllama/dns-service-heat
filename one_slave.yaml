@@ -28,6 +28,13 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  security_group:
+    description: >
+      Allow DNS service access to instances
+    type: string
+    constraints:
+    - custom_constraint: neutron.security_group
+
   # Host Characteristics
   hostname:
     description: The prefix for slave nameserver hostnames
@@ -147,6 +154,14 @@ resources:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
 
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: set_hostname}
+      - config: {get_resource: rhn_register}
+
+
   set_hostname:
     type: OS::Heat::CloudConfig
     properties:
@@ -158,15 +173,6 @@ resources:
             params:
               HOSTNAME: {get_param: hostname}
               DOMAIN: {get_param: domain_name}
-
-
-  init:
-    type: OS::Heat::MultipartMime
-    properties:
-      parts:
-      - config: {get_resource: set_hostname}
-      - config: {get_resource: rhn_register}
-
 
   # Register the host with RHN for access to software packages
   rhn_register:

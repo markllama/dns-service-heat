@@ -10,6 +10,12 @@ enterprise scale and quality DNS services.
 == Deployinging
 
     openstack stack create \
-        -e all_slave_parameters.yaml \
-        -e rhn_crednetials.yaml \
-        -t all_slaves.yaml  slaves
+       -e all_slave_parameters.yaml \
+       -e rhn_credentials.yaml \
+       -t all_slaves.yaml  slaves
+
+    openstack server ssh \
+      -i ~/osp-keys/ocp3_rsa \
+      -l cloud-user \
+      -o StrictHostKeyChecking=no \
+      ns0.dns.example.com
