@@ -1,8 +1,8 @@
 parameters:
   external_network: public_network
-  service_network: dns-net-service_network-wkcpxqgqc5bq
-  service_subnet: dns-net-service_subnet-7jqkrxluan3f
+  service_network: dns-network
+  service_subnet: dns-subnet
   slave_count: 3
   image: rhel7
   ssh_key_name: ocp3
-  domain_name: dns.e2e.bos.redhat.com
+  domain_name: dns.example.com

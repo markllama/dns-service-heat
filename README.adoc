@@ -9,13 +9,16 @@ enterprise scale and quality DNS services.
 
 == Deployinging
 
-    openstack stack create \
-       -e all_slave_parameters.yaml \
-       -e rhn_credentials.yaml \
-       -t all_slaves.yaml  slaves
+----
+openstack stack create --parameter external_network=public_network -t dns_network.yaml dns-network
+----
 
-    openstack server ssh \
-      -i ~/osp-keys/ocp3_rsa \
-      -l cloud-user \
-      -o StrictHostKeyChecking=no \
-      ns0.dns.example.com
+----
+openstack stack create -e dns_service_parameters.yaml -e rhn_credentials.yaml \
+  -t dns_service.yaml  dns-service
+----
+
+----
+openstack server ssh -i ~/osp-keys/ocp3_rsa -l cloud-user -o StrictHostKeyChecking=no \
+  ns0.dns.example.com
+----

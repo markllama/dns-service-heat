@@ -12,6 +12,12 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  network_name_prefix:
+    type: string
+    description: >
+      The name of the network to create
+    default: dns
+
   service_subnet_cidr:
     type: string
     description: >
@@ -28,6 +34,12 @@ resources:
   # Network Components
   service_network:
     type: OS::Neutron::Net
+    properties:
+      name:
+        str_replace:
+          template: "{{prefix}}-network"
+          params:
+            "{{prefix}}":  {get_param: network_name_prefix}
 
   service_subnet:
     type: OS::Neutron::Subnet
@@ -35,16 +47,25 @@ resources:
       cidr: {get_param: service_subnet_cidr}
       network: {get_resource: service_network}
       dns_nameservers: {get_param: dns_nameservers}
+      name:
+        str_replace:
+          template: "{{prefix}}-subnet"
+          params:
+            "{{prefix}}":  {get_param: network_name_prefix}
 
   external_router:
     type: OS::Neutron::Router
     properties:
       external_gateway_info:
         network: {get_param: external_network}
-
+      name:
+        str_replace:
+          template: "{{prefix}}-router"
+          params:
+            "{{prefix}}":  {get_param: network_name_prefix}
+      
   external_router_interface:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: {get_resource: external_router}
       subnet: {get_resource: service_subnet}
-
