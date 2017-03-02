@@ -17,7 +17,12 @@ parameters:
     type: string
     default: "ns"
 
-      # Connectivity
+  domain_name:
+    description: >
+      All VMs will be placed in this domain
+    type: string
+
+  # Connectivity
   external_network:
     type: string
     description: >
@@ -49,6 +54,34 @@ parameters:
       '-P master_server_group_policies=affinity'.
     default: ['anti-affinity']
 
+  image:
+    description: >
+      The Glance image to use as a base for DNS servers
+    type: string
+    constraints:
+      - custom_constraint: glance.image
+      
+  flavor:
+    description: >
+      The name of the OpenStack instance flavor to use for DNS servers
+    type: string
+    default: m1.small    
+    constraints:
+      - custom_constraint: nova.flavor
+
+  # Access to the VMs
+  ssh_user:
+    type: string
+    description: >
+      The SSH user available on all nodes.
+    default: cloud-user
+
+  ssh_key_name:
+    type: string
+    description: Name of the SSH keypair registered with Nova
+    constraints:
+    - custom_constraint: nova.keypair
+
 resources:
   
   slaves:
@@ -58,6 +91,8 @@ resources:
       resource_def:
         type: one_slave.yaml
         properties:
+          image: {get_param: image}
+          flavor: {get_param: flavor}
           external_network: {get_param: external_network}
           service_network: {get_param: service_network}
           service_subnet: {get_param: service_subnet}
@@ -66,6 +101,9 @@ resources:
               template: "%prefix%%index%"
               params:
                 '%prefix%': {get_param: hostname_prefix}
+          domain_name: {get_param: domain_name}
+          ssh_user: {get_param: ssh_user}
+          ssh_key_name: {get_param: ssh_key_name}
           server_group: {get_resource: slave_server_group}
 
   slave_server_group:
@@ -73,4 +111,3 @@ resources:
     properties:
       name: slave_server_group
       policies: {get_param: slave_server_group_policies}
-
