@@ -1,0 +1,36 @@
+heat_template_version: 2016-10-14
+
+description:
+  An instance for a DNS slave server
+  The instances are created with Heat and then configured with Ansible
+
+parameters:
+
+#  service_network:
+#    description: >
+#      The name or ID of the internal network
+#    type: string
+#    constraints:
+#    - custom_constraint: neutron.network
+
+#  service_subnet:
+#    description: >
+#      The name or ID of the internal IPv4 space
+#    type: string
+#    constraints:
+#    - custom_constraint: neutron.subnet
+
+resources:
+  host:
+    type: OS::Nova::Server
+    properties:
+      image: rhel7
+      flavor: m1.small
+      networks:
+      - port: {get_resource: port}
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network: dns-net-service_network-wkcpxqgqc5bq
+      replacement_policy: AUTO

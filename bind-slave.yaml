@@ -27,7 +27,8 @@ parameters:
     type: string
     constraints:
     - custom_constraint: neutron.subnet
-      
+
+  # Instance Characteristics    
   image:
     description: >
       The Glance image to use as a base for DNS servers
@@ -43,6 +44,7 @@ parameters:
     constraints:
       - custom_constraint: nova.flavor
 
+  # Instance Naming
   hostname:
     description: >
       The Infrastructure hostname portion of the FQDN
@@ -55,6 +57,7 @@ parameters:
     description: >
       All VMs will be placed in this domain
     type: string
+
 
   # Access to the VMs
   ssh_user:
@@ -76,6 +79,7 @@ parameters:
     constraints:
       - custom_constraint: neutron.security_group
 
+  # Track multiple copies
   slave_server_group:
     description: >
       ID of a server group containing all of the slave hosts
@@ -84,7 +88,7 @@ parameters:
 resources:
 
   # A VM to provide host based orchestration and other sub-services
-  slave_server:
+  host:
     type: OS::Nova::Server
     properties:
       name:

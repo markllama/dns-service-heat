@@ -5,14 +5,11 @@ description:
   The instances are created with Heat and then configured with Ansible
 
 parameters:
-
-  # Networks to connect to or create
-  external_network:
-    type: string
+  slave_count:
+    type: number
     description: >
-      The external network that provides floating IP addresses for the nodes
-    constraints:
-    - custom_constraint: neutron.network
+      Number of slave servers to create.
+    default: 3
 
   service_network:
     description: >
@@ -28,113 +25,16 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
-  image:
-    description: >
-      The Glance image to use as a base for DNS servers
-    type: string
-    constraints:
-      - custom_constraint: glance.image
-      
-  flavor:
-    description: >
-      The name of the OpenStack instance flavor to use for DNS servers
-    type: string
-    default: m1.small    
-    constraints:
-      - custom_constraint: nova.flavor
-
-  hostname_prefix:
-    description: >
-      The Infrastructure hostname portion of the FQDN
-    type: string
-    default: "ns"
-    constraints:
-    - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
-
-  domain_name:
-    description: >
-      All VMs will be placed in this domain
-    type: string
-
-  # Access to the VMs
-  ssh_user:
-    type: string
-    description: >
-      The SSH user available on all nodes.
-
-  ssh_key_name:
-    type: string
-    description: Name of the SSH keypair registered with Nova
-    constraints:
-    - custom_constraint: nova.keypair
-
-  slave_count:
-    type: number
-    description: >
-      Number of slave servers to create.
-    default: 1
-
-  slave_server_group_policies:
-    type: comma_delimited_list
-    description: >
-      List of policies applied on slave server ServerGroup. By default
-      'anti-affinity' policy is used to make sure that each master node
-      is deployed on a different host. If you use a small/all-in-one openstack
-      environment, you may need to disable this e.g. by passing
-      '-P master_server_group_policies=affinity'.
-    default: ['anti-affinity']
-
 resources:
   
-  slave_security_group:
-    description: >
-      Define network access to DNS slave servers
-      ICMP, SSH, and DNS (TCP and UDP) allowed
-    type: OS::Neutron::SecurityGroup
-    properties:
-      rules:
-        - protocol: icmp
-        - direction: ingress
-          protocol: tcp
-          port_range_min: 22
-          port_range_max: 22
-        - direction: ingress
-          protocol: tcp
-          port_range_min: 53
-          port_range_max: 53
-        - direction: ingress
-          protocol: udp
-          port_range_min: 53
-          port_range_max: 53
-
-  dns_slaves:
+  slaves:
     type: OS::Heat::ResourceGroup
     properties:
       count: {get_param: slave_count}
       resource_def:
-        type: bind-slave.yaml
-        properties:
-          external_network: {get_param: external_network}
-          service_network: {get_param: service_network}
-          service_subnet: {get_param: service_subnet}
-          slave_server_group: {get_resource: slave_server_group}
-          slave_security_group: {get_resource: slave_security_group} 
-          image: {get_param: image}
-          flavor: {get_param: flavor}
-          hostname:
-            str_replace:
-              template: "%hostname_prefix%%index%"
-              params:
-                "%hostname_prefix%": {get_param: hostname_prefix}
-          domain_name: {get_param: domain_name}
-          ssh_user: {get_param: ssh_user}
-          ssh_key_name: {get_param: ssh_key_name}
-
-  # OpenShift web and REST API network controls
-  slave_server_group:
-    type: OS::Nova::ServerGroup
-    properties:
-      name: slave_server_group
-      policies: {get_param: slave_server_group_policies}     
+        type: one_slave.yaml
+#        properties:
+#          service_network: {get_param: service_network}
+#          service_subnet: {get_param: service_subnet}
+          
 
