@@ -11,6 +11,12 @@ parameters:
       Number of slave servers to create.
     default: 3
 
+  hostname_prefix:
+    description: >
+      The default prefix for slave server hostnames
+    type: string
+    default: "ns"
+
   service_network:
     description: >
       The name or ID of the internal network
@@ -25,6 +31,16 @@ parameters:
     constraints:
     - custom_constraint: neutron.subnet
 
+  slave_server_group_policies:
+    type: comma_delimited_list
+    description: >
+      List of policies applied on master nodes ServerGroup. By default
+      'anti-affinity' policy is used to make sure that each master node
+      is deployed on a different host. If you use a small/all-in-one openstack
+      environment, you may need to disable this e.g. by passing
+      '-P master_server_group_policies=affinity'.
+    default: ['anti-affinity']
+
 resources:
   
   slaves:
@@ -33,8 +49,19 @@ resources:
       count: {get_param: slave_count}
       resource_def:
         type: one_slave.yaml
-#        properties:
-#          service_network: {get_param: service_network}
-#          service_subnet: {get_param: service_subnet}
-          
+        properties:
+          service_network: {get_param: service_network}
+          service_subnet: {get_param: service_subnet}
+          hostname:
+            str_replace:
+              template: "%prefix%%index%"
+              params:
+                '%prefix%': {get_param: hostname_prefix}
+          server_group: {get_resource: slave_server_group}
+
+  slave_server_group:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: slave_server_group
+      policies: {get_param: slave_server_group_policies}
 

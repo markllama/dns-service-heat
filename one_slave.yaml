@@ -6,19 +6,30 @@ description:
 
 parameters:
 
-#  service_network:
-#    description: >
-#      The name or ID of the internal network
-#    type: string
-#    constraints:
-#    - custom_constraint: neutron.network
+  # Connectivity
+  service_network:
+    description: >
+      The name or ID of the internal network
+    type: string
+    constraints:
+    - custom_constraint: neutron.network
 
-#  service_subnet:
-#    description: >
-#      The name or ID of the internal IPv4 space
-#    type: string
-#    constraints:
-#    - custom_constraint: neutron.subnet
+  service_subnet:
+    description: >
+      The name or ID of the internal IPv4 space
+    type: string
+    constraints:
+    - custom_constraint: neutron.subnet
+
+  # Host Characteristics
+  hostname:
+    description: The prefix for slave nameserver hostnames
+    type: string
+
+  server_group:
+    description: >
+      ID of a server group containing all of the master hosts
+    type: string
 
 resources:
   host:
@@ -28,9 +39,14 @@ resources:
       flavor: m1.small
       networks:
       - port: {get_resource: port}
-
+      name: {get_param: hostname}
+      scheduler_hints:
+        group: {get_param: server_group}
+        
   port:
     type: OS::Neutron::Port
     properties:
-      network: dns-net-service_network-wkcpxqgqc5bq
+      network: {get_param: service_network}
+      fixed_ips:
+      - subnet: {get_param: service_subnet}
       replacement_policy: AUTO
