@@ -7,3 +7,9 @@ enterprise scale and quality DNS services.
 
 == Inputs
 
+== Deployinging
+
+    openstack stack create \
+        -e all_slave_parameters.yaml \
+        -e rhn_crednetials.yaml \
+        -t all_slaves.yaml  slaves
