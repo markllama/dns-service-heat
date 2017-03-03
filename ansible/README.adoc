@@ -4,3 +4,33 @@
 * hosts
 ** masters
 ** slaves
+
+
+----
+ansible -i ansible/inventory.heat all --user cloud-user --private-key ~/osp-keys/ocp3_rsa --ssh-common-args '-o StrictHostKeyChecking=no' -m ping
+----
+
+----
+zone: dns.example.com
+contact: admin.example.com
+update_key: bKcZ4P2FhWKRQoWtx5F33w==
+forwarders:
+  - 10.19.114.41
+  - 10.19.114.2
+  - 10.19.5.19
+masters:
+  - name: ns-master
+    address: 10.19.114.143
+slaves:
+  - name: ns0
+    address: 10.19.114.138
+  - name: ns1
+    address: 10.19.114.140
+  - name: ns2
+    address: 10.19.114.147
+----
+
+
+----
+jinja2-2.7 ansible/inventory.j2 < ansible/stack_hosts.yaml > inventory
+----
