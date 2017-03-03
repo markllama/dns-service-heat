@@ -37,3 +37,13 @@ openstack stack create \
 ----
 openstack stack create -e dns_servers_parameters.yaml -e rhn_credentials.yaml  -t dns_servers.yaml  dns-servers
 ----
+
+== Extracting server hostname and IP addresses
+
+----
+openstack server show ns-master.dns.example.com -f json | jq '.name'
+----
+
+----
+openstack server show ns-master.dns.example.com -f json | jq '.addresses' | tr -d \"
+----
