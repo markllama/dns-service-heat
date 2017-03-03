@@ -7,3 +7,33 @@ enterprise scale and quality DNS services.
 
 == Inputs
 
+== Deploying
+
+----
+openstack stack create -e dns_service_parameters.yaml [-e rhn_credentials.yaml] -t dns_service.yaml dns-service
+
+----
+----
+openstack stack create -e dns_service_parameters.yaml -e rhn_credentials.yaml \
+  -t dns_service.yaml  dns-service
+----
+
+----
+openstack server ssh -i ~/osp-keys/ocp3_rsa -l cloud-user -o StrictHostKeyChecking=no \
+  ns-master.dns.example.com
+----
+
+
+== Deploying On An Existing Network
+
+----
+openstack stack create \
+  --parameter external_network=public_network \
+  --parameter dns_nameservers=10.19.114.41,10.19.114.2,10.11.5.19 \
+  -t dns_network.yaml \
+  dns-network
+----
+
+----
+openstack stack create -e dns_servers_parameters.yaml -e rhn_credentials.yaml  -t dns_servers.yaml  dns-servers
+----

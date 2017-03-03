@@ -1,17 +1,31 @@
 heat_template_version: 2016-10-14
 
 description:
-  An instance for a DNS slave server
+  An instance for a DNS service made up of a single master and a set of
+  slave services.
   The instances are created with Heat and then configured with Ansible
 
 parameters:
-  slave_count:
-    type: number
-    description: >
-      Number of slave servers to create.
-    default: 3
 
-  hostname_prefix:
+  # Connectivity
+  external_network:
+    type: string
+    description: >
+      The external network that provides floating IP addresses for the nodes
+    constraints:
+    - custom_constraint: neutron.network
+
+  dns_nameservers:
+    type: comma_delimited_list
+    description: Addresses of a dns nameserver reachable in your environment
+      
+  master_hostname:
+    description: >
+      The default prefix for slave server hostnames
+    type: string
+    default: "ns-master"
+
+  slave_hostname_prefix:
     description: >
       The default prefix for slave server hostnames
     type: string
@@ -22,34 +36,11 @@ parameters:
       All VMs will be placed in this domain
     type: string
 
-  # Connectivity
-  external_network:
-    type: string
+  slave_count:
+    type: number
     description: >
-      The external network that provides floating IP addresses for the nodes
-    constraints:
-    - custom_constraint: neutron.network
-
-  service_network:
-    description: >
-      The name or ID of the internal network
-    type: string
-    constraints:
-    - custom_constraint: neutron.network
-
-  service_subnet:
-    description: >
-      The name or ID of the internal IPv4 space
-    type: string
-    constraints:
-    - custom_constraint: neutron.subnet
-
-  security_group:
-    description: >
-      Allow DNS service access to instances
-    type: string
-    constraints:
-    - custom_constraint: neutron.security_group
+      Number of slave servers to create.
+    default: 3
 
   slave_server_group_policies:
     type: comma_delimited_list
@@ -133,40 +124,31 @@ parameters:
     default: ''
 
 resources:
-  
-  slaves:
-    type: OS::Heat::ResourceGroup
+
+  network:
+    type: dns_network.yaml
     properties:
-      count: {get_param: slave_count}
-      resource_def:
-        type: one_slave.yaml
-        properties:
-          image: {get_param: image}
-          flavor: {get_param: flavor}
-          external_network: {get_param: external_network}
-          service_network: {get_param: service_network}
-          service_subnet: {get_param: service_subnet}
-          security_group: {get_param: security_group}
-          hostname:
-            str_replace:
-              template: "%prefix%%index%"
-              params:
-                '%prefix%': {get_param: hostname_prefix}
-          domain_name: {get_param: domain_name}
-          ssh_user: {get_param: ssh_user}
-          ssh_key_name: {get_param: ssh_key_name}
-          server_group: {get_resource: slave_server_group}
-          rhn_username: {get_param: rhn_username}
-          rhn_password: {get_param: rhn_password}
-          sat6_hostname: {get_param: sat6_hostname}
-          sat6_organization: {get_param: sat6_organization}
-          sat6_activationkey: {get_param: sat6_activationkey}
-          rhn_pool: {get_param: rhn_pool}
+      external_network: {get_param: external_network}
+      dns_nameservers: {get_param: dns_nameservers}
 
-  slave_server_group:
-    type: OS::Nova::ServerGroup
+  hosts:
+    depends_on: [network]
+    type: dns_servers.yaml
     properties:
-      name: slave_server_group
-      policies: {get_param: slave_server_group_policies}
-
-
+      external_network: {get_param: external_network}
+      service_network: {get_attr: [network, dns_network]}
+      service_subnet: {get_attr: [network, dns_subnet]}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      master_hostname: {get_param: master_hostname}
+      slave_hostname_prefix: {get_param: slave_hostname_prefix}
+      domain_name: {get_param: domain_name}
+      slave_count: {get_param: slave_count}
+      ssh_user: {get_param: ssh_user}
+      ssh_key_name: {get_param: ssh_key_name}
+      rhn_username: {get_param: rhn_username}
+      rhn_password: {get_param: rhn_password}
+      sat6_hostname: {get_param: sat6_hostname}
+      sat6_organization: {get_param: sat6_organization}
+      sat6_activationkey: {get_param: sat6_activationkey}
+      rhn_pool: {get_param: rhn_pool}

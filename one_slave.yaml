@@ -1,12 +1,12 @@
 heat_template_version: 2016-10-14
 
 description:
-  An instance for a DNS master server
+  An instance for a DNS slave server
   The instances are created with Heat and then configured with Ansible
 
 parameters:
 
-  # Networks to connect to or create
+  # Connectivity
   external_network:
     type: string
     description: >
@@ -35,6 +35,20 @@ parameters:
     constraints:
     - custom_constraint: neutron.security_group
 
+  # Host Characteristics
+  hostname:
+    description: The prefix for slave nameserver hostnames
+    type: string
+
+  domain_name:
+    description: The prefix for slave nameserver hostnames
+    type: string
+
+  server_group:
+    description: >
+      ID of a server group containing all of the master hosts
+    type: string
+
   image:
     description: >
       The Glance image to use as a base for DNS servers
@@ -46,23 +60,8 @@ parameters:
     description: >
       The name of the OpenStack instance flavor to use for DNS servers
     type: string
-    default: m1.small    
     constraints:
       - custom_constraint: nova.flavor
-
-  hostname:
-    description: >
-      The Infrastructure hostname portion of the FQDN
-    type: string
-    default: "ns-master"
-    constraints:
-    - allowed_pattern: '[a-z0-9\-]*'
-      description: Hostname must contain only characters [a-z0-9\-].
-
-  domain_name:
-    description: >
-      All VMs will be placed in this domain
-    type: string
 
   # Access to the VMs
   ssh_user:
@@ -76,21 +75,17 @@ parameters:
     constraints:
     - custom_constraint: nova.keypair
 
-  # Red Hat subscription parameters
+  # Software Subscription information
   rhn_username:
-    type: string
     description: >
-      The username for registering the hosts with RHN. If empty, they will not
-      be registered.
-    default: ''
+      A valid user with entitlements to RHEL and OpenShift software repos
+    type: string
 
   rhn_password:
-    type: string
     description: >
-      The password for registering the hosts with RHN. If empty, they will not
-      be registered.
+      The password for the RHN user
+    type: string
     hidden: true
-    default: ''
 
   # Red Hat satellite subscription parameters
   sat6_hostname:
@@ -112,39 +107,42 @@ parameters:
     default: ''
 
   rhn_pool:
-    type: string
     description: >
-      The pool to attach. Will use `subscription-manager attach --auto` if left
-      blank.
+      A subscription pool containing the RHEL and OpenShift software repos
+      OPTIONAL
+    type: string
     hidden: true
+
+  extra_rhn_pools:
+    type: comma_delimited_list
+    description: List of rhn pools which will be installed on each node.
     default: ''
 
 
 resources:
-  # A VM to provide host based orchestration and other sub-services
   host:
     type: OS::Nova::Server
     properties:
       name:
-        str_replace:
-          template: "HOST.DOMAIN"
-          params:
-            HOST: {get_param: hostname}
-            DOMAIN: {get_param: domain_name}
-      admin_user: {get_param: ssh_user}
+          str_replace:
+            template: "HOSTNAME.DOMAIN"
+            params:
+              HOSTNAME: {get_param: hostname}
+              DOMAIN: {get_param: domain_name}
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: init}
       image: {get_param: image}
       flavor: {get_param: flavor}
+      admin_user: {get_param: ssh_user}
       key_name: {get_param: ssh_key_name}
       networks:
       - port: {get_resource: port}
-      user_data_format: SOFTWARE_CONFIG
-      user_data: {get_resource: init}
-  
+      scheduler_hints:
+        group: {get_param: server_group}
+        
   port:
     type: OS::Neutron::Port
     properties:
-      security_groups:
-      - {get_param: security_group}
       network: {get_param: service_network}
       fixed_ips:
       - subnet: {get_param: service_subnet}
@@ -155,6 +153,14 @@ resources:
     properties:
       floating_network: {get_param: external_network}
       port_id: {get_resource: port}
+
+  init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: set_hostname}
+      - config: {get_resource: rhn_register}
+
 
   set_hostname:
     type: OS::Heat::CloudConfig
@@ -167,15 +173,6 @@ resources:
             params:
               HOSTNAME: {get_param: hostname}
               DOMAIN: {get_param: domain_name}
-
-
-  init:
-    type: OS::Heat::MultipartMime
-    properties:
-      parts:
-      - config: {get_resource: set_hostname}
-      - config: {get_resource: rhn_register}
-
 
   # Register the host with RHN for access to software packages
   rhn_register:
@@ -191,4 +188,17 @@ resources:
             '{{sat6_organization}}': {get_param: sat6_organization}
             '{{sat6_activationkey}}': {get_param: sat6_activationkey}
           template: {get_file: fragments/rhn-register.sh}
+
+# Wait until the cloud-init process ends and reports or times out
+#  wait_condition:
+#    type: OS::Heat::WaitCondition
+#    properties:
+#      handle: {get_resource: wait_handle}
+#      timeout: {get_param: timeout}
+
+  # This is passed to bastion_init cloud-init script as a curl CLI command
+  # When the cloud-init process ends it queries the URL with
+  # a message which ends the wait and returns the value
+#  wait_handle:
+#    type: OS::Heat::WaitConditionHandle
 
