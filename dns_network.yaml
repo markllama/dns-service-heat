@@ -4,7 +4,7 @@ description:
   A simple network to host other services
 
 parameters:
-# Networks to connect to or create
+  # Networks to connect to or create
   external_network:
     type: string
     description: >
@@ -27,7 +27,6 @@ parameters:
   dns_nameservers:
     type: comma_delimited_list
     description: Addresses of a dns nameserver reachable in your environment
-    default: 8.8.8.8
 
 resources:
 
@@ -69,3 +68,12 @@ resources:
     properties:
       router_id: {get_resource: external_router}
       subnet: {get_resource: service_subnet}
+
+outputs:
+  dns_network:
+    description: The network that carries the DNS service traffic
+    value: {get_resource: service_network}
+
+  dns_subnet:
+    description: The subnet that carries the DNS service traffic
+    value: {get_resource: service_subnet}
