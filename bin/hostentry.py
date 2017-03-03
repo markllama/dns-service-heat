@@ -14,4 +14,9 @@ if __name__ == "__main__":
                          os.environ["OS_AUTH_URL"])
 
     for server in nova.servers.list():
-        print [i['addr'] for i in server.addresses['dns-network'] if i[u'OS-EXT-IPS:type' == u'floating']]
+        #print server.name
+        for interface in server.addresses['dns-network']:
+            if interface['OS-EXT-IPS:type'] == 'floating':
+                print interface['addr'] + ' ' + server.name
+            #print "  " + interface['OS-EXT-IPS:type'] + " " + interface['addr']
+            #print "  " + str(interface)
