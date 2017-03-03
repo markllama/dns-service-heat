@@ -1,0 +1,6 @@
+== Installing a DNS service with Ansible
+
+* zone
+* hosts
+** masters
+** slaves
