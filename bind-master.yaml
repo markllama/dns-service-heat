@@ -119,6 +119,11 @@ parameters:
     hidden: true
     default: ''
 
+  # Delay openshift installation until the master is ready to accept
+  timeout:
+    description: Time to wait until the master setup is ready.
+    type: number
+    default: 4000
 
 resources:
   # A VM to provide host based orchestration and other sub-services
@@ -174,8 +179,22 @@ resources:
     properties:
       parts:
       - config: {get_resource: set_hostname}
+      - config: {get_resource: included_files}
       - config: {get_resource: rhn_register}
-
+      - config: {get_resource: install_complete}
+        
+  included_files:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /usr/local/lib/notify.sh
+          permissions: 0755
+          content:
+            str_replace:
+              params:
+                $WC_NOTIFY: { get_attr: ['wait_handle', 'curl_cli'] }
+              template: {get_file: fragments/notify.sh}
 
   # Register the host with RHN for access to software packages
   rhn_register:
@@ -191,4 +210,22 @@ resources:
             '{{sat6_organization}}': {get_param: sat6_organization}
             '{{sat6_activationkey}}': {get_param: sat6_activationkey}
           template: {get_file: fragments/rhn-register.sh}
+
+  install_complete:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: fragments/install_complete.sh}
+
+  # Wait until the cloud-init process ends and reports or times out
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      timeout: {get_param: timeout}
+
+  # This is passed to bastion_init cloud-init script as a curl CLI command
+  # When the cloud-init process ends it queries the URL with
+  # a message which ends the wait and returns the value
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
 

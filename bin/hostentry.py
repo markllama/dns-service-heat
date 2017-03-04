@@ -50,7 +50,7 @@ def add_a_record(name,zone,ipv4addr,master,key):
     response = dns.query.tcp(update, master)
     return response
 
-def add_ns_record(fqdn,zone,master,key):
+def add_ns_record(zone,master,key):
     keyring = dns.tsigkeyring.from_text({'update-key': key})
     update = dns.update.Update(zone, keyring=keyring)
     update.replace(zone, 300, 'ns', fqdn)
@@ -75,6 +75,8 @@ if __name__ == "__main__":
                          opts.auth_url)
 
     pairs = [floating_ip(server, opts.network) for server in nova.servers.list()]
+    print pairs
+    
     master_addr = [host['address'] for host in pairs if host_part(host['name'], opts.zone) == opts.master]
 
     print master_addr[0]
@@ -89,11 +91,11 @@ if __name__ == "__main__":
             master_addr[0],
             opts.update_key
         )
-        add_ns_record(
-            host_part(record['name'], opts.zone), 
-           opts.zone,
-            master_addr[0],
-            opts.update_key
-        )
+#        add_ns_record(
+#           host_part(record['name'], opts.zone), 
+#           opts.zone,
+#            master_addr[0],
+#            opts.update_key
+#        )
                 
     

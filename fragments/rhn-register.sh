@@ -22,6 +22,8 @@ SAT6_ACTIVATIONKEY=${SAT6_ACTIVATIONKEY:-'{{sat6_activationkey}}'}
 set -eu
 set -x
 
+source /usr/local/lib/notify.sh
+
 # Return the final non-zero exit code of a failed pipe (or 0 for success)
 set -o pipefail
 
