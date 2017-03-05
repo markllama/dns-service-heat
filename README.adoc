@@ -7,6 +7,16 @@ enterprise scale and quality DNS services.
 
 == Inputs
 
+----
+parameters:
+  external_network: public_network
+  slave_count: 3
+  image: rhel7
+  ssh_key_name: ocp3
+  domain_name: dns.example.com
+  dns_nameservers: 10.19.114.42,10.19.114.2,10.11.5.19
+----
+
 == Deploying
 
 ----
@@ -38,12 +48,24 @@ openstack stack create \
 openstack stack create -e dns_servers_parameters.yaml -e rhn_credentials.yaml  -t dns_servers.yaml  dns-servers
 ----
 
-== Extracting server hostname and IP addresses
+== Configure the DNS Service
 
 ----
-openstack server show ns-master.dns.example.com -f json | jq '.name'
+python bin/stack_data.py --zone dns.example.com --update-key "your key" > dns_stack_dynamic.yaml
 ----
 
 ----
-openstack server show ns-master.dns.example.com -f json | jq '.addresses' | tr -d \"
+jinja2-2.7 ansible/inventory.j2 dns_stack_dynamic.yaml > inventory
+----
+
+----
+ansible-playbook -i inventory --become --user cloud-user --private-key ../keys/ocp3_rsa --ssh-common-args "-o StrictHostKeyChecking=no" ../dns-service-playbooks/playbooks/bind-server.yml
+----
+
+
+== Add the glue records
+
+----
+python bin/add_a_record.py --server <master> --zone dns.example.com. --key <key> ns0 <addr>
+python bin/add_ns_record.py --server <master> --zone dns.example.com. --key <key> ns0.dns.example.com.
 ----
