@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+!/usr/bin/env python
 #
 #
 #
@@ -58,13 +58,6 @@ if __name__ == "__main__":
 ]
 
     struct = dict()
-
-    hosts = (
-        {'name': 'ns-master', 'address': '10.19.114.148'},
-        {'name': 'ns0', 'address': '10.19.114.150'},
-        {'name': 'ns1', 'address': '10.19.114.139'},
-        {'name': 'ns2', 'address': '10.19.114.143'}
-    )
 
     struct['zone'] = opts.zone
     struct['contact'] = opts.contact
