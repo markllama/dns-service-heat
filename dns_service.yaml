@@ -15,7 +15,7 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
-  dns_nameservers:
+  dns_forwarders:
     type: comma_delimited_list
     description: Addresses of a dns nameserver reachable in your environment
       
@@ -129,7 +129,7 @@ resources:
     type: dns_network.yaml
     properties:
       external_network: {get_param: external_network}
-      dns_nameservers: {get_param: dns_nameservers}
+      dns_nameservers: {get_param: dns_forwarders}
 
   hosts:
     depends_on: [network]

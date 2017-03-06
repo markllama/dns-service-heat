@@ -1,7 +1,7 @@
 parameters:
   external_network: public_network
-  slave_count: 3
   image: rhel7
   ssh_key_name: ocp3
+  slave_count: 3
   domain_name: dns.example.com
-  dns_nameservers: 10.19.114.42,10.19.114.2,10.11.5.19
+  dns_forwarders: 10.19.114.42,10.19.114.2,10.11.5.19
