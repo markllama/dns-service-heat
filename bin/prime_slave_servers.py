@@ -15,6 +15,11 @@ def python_unicode(loader, node):
 
 def add_a_record(server, zone, key, name, address, ttl=300):
     # make input zones absolute
+    print "add_a_record:"
+    print "  server: %s" % server
+    print "  zone: %s" % zone
+    print "  name: %s" % name
+    print "  address:  %s" % address
     #zone = zone + '.' if not zone.endswith('.')
     keyring = dns.tsigkeyring.from_text({'update-key': key})
     update = dns.update.Update(zone, keyring=keyring)
@@ -30,7 +35,8 @@ yaml.SafeLoader.add_constructor(
 def add_ns_record(server, zone, key, nameserver, ttl=300):
 
     # make input zones absolute
-    #zone = zone + '.' if not zone.endswith('.')
+    #if not zone.endswith('.'):
+    #    zone = zone + '.' 
 
     keyring = dns.tsigkeyring.from_text({'update-key': key})
     update = dns.update.Update(zone, keyring=keyring)
@@ -61,5 +67,9 @@ if __name__ == "__main__":
 
     
     for slave in service_spec['slaves']:
-        add_a_record(master, zone+'.', key, slave['name']+'.', slave['address'])
-        add_ns_record(master, zone+'.', key, slave['name'])
+        ra = add_a_record(master, zone, key, "%s.%s." % (slave['name'], zone), slave['address'])
+        print ra
+
+    for slave in service_spec['slaves']:
+        rns = add_ns_record(master, zone+'.', key, slave['name'])
+        print rns
