@@ -87,12 +87,7 @@ if __name__ == "__main__":
     #print pairs
     
     #set_a_record(pairs
-    print pairs
-    print "---"
     for record in pairs:
-        print record
-        print opts.nameserver
-        print opts.update_key
         add_a_record(
             host_part(record['name'], opts.zone),
             opts.zone,
@@ -101,4 +96,18 @@ if __name__ == "__main__":
             opts.update_key
         )
                 
+
+    pairs = [floating_ip(server, opts.network) for server in nova.servers.list() if floating_ip(server,opts.network) is not None]
+    #print pairs
     
+    #set_a_record(pairs
+    for record in pairs:
+        add_a_record(
+            host_part(re.sub(opts.subzone + '.', '', record['name']), opts.zone),
+            opts.zone,
+            record['address'],
+            opts.nameserver,
+            opts.update_key
+        )
+                
+

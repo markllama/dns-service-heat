@@ -15,11 +15,11 @@ def python_unicode(loader, node):
 
 def add_a_record(server, zone, key, name, address, ttl=300):
     # make input zones absolute
-    print "add_a_record:"
-    print "  server: %s" % server
-    print "  zone: %s" % zone
-    print "  name: %s" % name
-    print "  address:  %s" % address
+    #print "add_a_record:"
+    #print "  server: %s" % server
+    #print "  zone: %s" % zone
+    #print "  name: %s" % name
+    #print "  address:  %s" % address
     #zone = zone + '.' if not zone.endswith('.')
     keyring = dns.tsigkeyring.from_text({'update-key': key})
     update = dns.update.Update(zone, keyring=keyring)
@@ -67,9 +67,11 @@ if __name__ == "__main__":
 
     
     for slave in service_spec['slaves']:
+        print "Adding A record: %s.%s %s" % (slave['name'], zone, slave['address'])
         ra = add_a_record(master, zone, key, "%s.%s." % (slave['name'], zone), slave['address'])
-        print ra
+        #print ra
 
     for slave in service_spec['slaves']:
+        print "Adding NS record: %s %s.%s" % (zone, slave['name'], zone)
         rns = add_ns_record(master, zone+'.', key, slave['name'])
-        print rns
+        #print rns

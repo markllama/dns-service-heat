@@ -11,11 +11,18 @@ function retry() {
     # cmd = $@
     local POLL_TRY=0
     local POLL_INTERVAL=5
+    echo "Trying $@ at $POLL_INTERVAL second intervals"
+    local START=$(date +%s)
     while ! $@ ; do
-        echo Try $POLL_TRY: waiting $POLL_INTERVAL seconds
+        [ $(($POLL_TRY % 6)) -eq 0 ] && echo -n $(($POLL_TRY * $POLL_INTERVAL)) || echo -n .
+        echo -n .
 		    sleep $POLL_INTERVAL
 		    POLL_TRY=$(($POLL_TRY + 1))
     done
+    local END=$(date +%s)
+    local DURATION=$(($END - $START))
+    echo Done
+    echo Completed in $DURATION seconds
 }
 
 function stack_complete() {
@@ -27,14 +34,16 @@ function stack_complete() {
 # MAIN
 # =============================================================================
 
+set -x
 openstack stack create \
           -e ${DNS_SPEC} \
           --parameter domain_name=${ZONE} \
           -e rhn_credentials.yaml \
           -t dns_service.yaml \
           ${STACK_NAME}
+set +x
 
-retry stack_complete $STACK_NAME
+retry stack_complete ${STACK_NAME}
 
 #
 # Extract the host information from openstack and create a yaml file with data
