@@ -2,6 +2,7 @@ parameters:
   external_network: public_network
 #  image: rhel7
   image: fedora25
+  flavor: m1.tiny
   ssh_user: fedora
   ssh_key_name: ocp3
   slave_count: 1
