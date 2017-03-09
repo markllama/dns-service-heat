@@ -37,6 +37,36 @@ function stack_complete() {
 # MAIN
 # =============================================================================
 
+
+# Create DNS service stack
+
+# INPUTS
+#   instance_parameters
+#     image
+#     flavor
+#     ssh_user
+#
+#   RHN credentials
+#     RHN_USERNAME
+#     RHN_PASSWORD
+#     RHN_POOL_ID
+#
+#   OSP parameters
+#
+#     OS_AUTH_URL
+#     OS_USERNAME
+#     OS_PASSWORD
+#     OS_TENANT_NAME
+#     OS_REGION
+#
+#   DNS configuration parameters
+#
+#     DNS_ZONE
+#     DNS_UPDATE_KEY
+#
+#   Stack Identification
+#     STACK_NAME
+#
 set -x
 openstack stack create \
           -e ${DNS_SPEC} \
@@ -49,10 +79,37 @@ set +x
 
 retry stack_complete ${STACK_NAME}
 
+# Generate a YAML file with the ansible configuration information:
 #
-# Extract the host information from openstack and create a yaml file with data
-# to apply to an inventory template
+# INPUTS
+#   OSP Credentials
+#     OS_AUTH_URL
+#     OS_USERNAME
+#     OS_PASSWORD
+#     OS_TENANT_NAME
+#     OS_REGION_NAME
+#     
+#   DNS Configuration
+#     DNS_ZONE
+#     DNS_CONTACT
+#     DNS_UPDATE_KEY
+#     DNS_FORWARDER_LIST
 #
+#   OSP Configuration
+#     NETWORK_NAME - the Neutron network name to locate IP addresses
+#
+#     DNS_MASTER_HOSTNAME
+#     DNS_SLAVE_HOSTNAME_PREFIX
+#
+# OUTPUTS
+#    
+#   DNS Configuration
+#     DNS_ZONE
+#     DNS_CONTACT
+#     DNS_UPDATE_KEY
+#     DNS_FORWARDER_LIST
+#     DNS_MASTER_LIST {'name': '<name>', 'address': '<address>' }
+#     DNS_SLAVE_LIST {'name': '<name>', 'address': '<address>' }
 python bin/stack_data.py \
        --zone $ZONE \
        --update-key ${UPDATE_KEY}\
@@ -61,6 +118,10 @@ python bin/stack_data.py \
 #
 # create an inventory from a template and the stack host information
 #
+# INPUTS
+#   YAML file above
+# OUTPUTS
+#   INI formatted inventory file for Ansible
 jinja2-2.7 ansible/inventory.j2 dns_stack_data.yaml > inventory
 
 echo "Sleeping for stack instances to stabilize"
@@ -69,6 +130,10 @@ sleep 30
 #
 # Apply the playbook to the OSP instances to create a DNS service
 #
+# INPUTS
+#   INVENTORY FILE
+#   INSTANCE_USER
+#   SSH_PRIVATE_KEY_FILE
 export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -i inventory \
   --become --user $INSTANCE_USER --private-key ${PRIVATE_KEY_FILE} \
@@ -79,4 +144,4 @@ ansible-playbook -i inventory \
 #
 # Add the secondary name servers to the zone as both A and NS records
 #
-python bin/prime_slave_servers.py
+#python bin/prime_slave_servers.py

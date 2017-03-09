@@ -28,14 +28,15 @@ def parse_cli():
     
     return opts.parse_args()
 
-def floating_ip(server, network):
+def floating_ip(server, network=None):
+    # if network == None use 1st network
     entry = None
     for interface in server.addresses[network]:
         if interface['OS-EXT-IPS:type'] == 'floating':
             entry = {"name": server.name, "address": interface['addr']}
     return entry
 
-def forwarders():
+def resolv_conf_nameservers():
     ns_re = re.compile("^nameserver *(.*)$")
     f = open('/etc/resolv.conf')
     return [ns_re.match(l).groups()[0] for l in f.readlines() if ns_re.match(l)]
@@ -44,9 +45,20 @@ if __name__ == "__main__":
 
     (opts, args) = parse_cli()
 
-    master_re = re.compile("^(%s)\." % opts.master)
+    struct = dict()
+
+    # INPUTS
+    struct['zone'] = opts.zone
+    struct['contact'] = opts.contact
+    struct['update_key'] = opts.update_key
+    if len(opts.forwarders) > 0:
+        struct['forwarders'] = opts.forwarders
+    else:
+        struct['forwarders'] = resolv_conf_nameservers()
 
     zone_re = re.compile("\.%s$" % opts.zone)
+    master_re = re.compile("^(%s)\.%s" % (opts.master, opts.zone))
+    slave_re = re.compile("^(%s)[0-9]\.%s" % (opts.slave_prefix, opts.zone))
     
     nova = client.Client("2.0",
                          opts.username,
@@ -54,23 +66,32 @@ if __name__ == "__main__":
                          opts.project,
                          opts.auth_url)
 
-    servers = [floating_ip(server, opts.network) for server in nova.servers.list()
-]
+    # get a list of the server/floating IP pairs in the project
+    servers = [floating_ip(server, opts.network)
+               for server in nova.servers.list()]
 
-    struct = dict()
-
-    struct['zone'] = opts.zone
-    struct['contact'] = opts.contact
-    struct['update_key'] = opts.update_key
-    if len(opts.forwarders) > 0:
-        struct['forwarders'] = opts.forwarders
-    else:
-        struct['forwarders'] = forwarders()
+    # TODO: these need better filters
+    # Filter the nameserver master host(s) from the complete list
     struct['masters'] = [h for h in servers if master_re.match(h['name'])]
-    struct['masters'] = [{'name': zone_re.sub('', s['name']), 'address': s['address']} for s in struct['masters']]
+    # Then match them with their address and create a hash object for each one
+    struct['masters'] = [
+        {
+            'name': zone_re.sub('', s['name']),
+            'address': s['address']
+        }
+        for s in struct['masters']
+    ]
 
-    struct['slaves'] = [h for h in servers if not master_re.match(h['name'])]
+    # Filter the slave servers from the list (not masters) 
+    struct['slaves'] = [h for h in servers if  slave_re.match(h['name'])]
+    # Then create a simple object with name and IP address
+    struct['slaves'] = [
+        {
+            'name': zone_re.sub('', s['name']),
+            'address': s['address']
+        } for s in struct['slaves']
+    ]
 
-    struct['slaves'] = [{'name': zone_re.sub('', s['name']), 'address': s['address']} for s in struct['slaves']]
+    # Print the data in YAML format
     print yaml.dump(struct, default_flow_style=False)
-#    print yaml.dump(struct)
+
