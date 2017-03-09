@@ -2,7 +2,10 @@
 
 DNS_SPEC=${DNS_SPEC:-dns_service_parameters.yaml}
 ZONE=${ZONE:-example.com}
+UPDATE_KEY=${UPDATE_KEY:-"bKcZ4P2FhWKRQoWtx5F33w=="}
 STACK_NAME=${STACK_NAME:-dns-service}
+#RHN_CREDENTIALS="-e rhn_credentials.yaml"
+INSTANCE_USER=fedora
 
 PRIVATE_KEY_FILE=${PRIVATE_KEY_FILE:-~/.ssh/dns_stack_key_rsa}
 [ -r $PRIVATE_KEY_FILE ] || (echo no key file $PRIVATE_KEY_FILE && exit 1)
@@ -38,7 +41,8 @@ set -x
 openstack stack create \
           -e ${DNS_SPEC} \
           --parameter domain_name=${ZONE} \
-          -e rhn_credentials.yaml \
+          ${RHN_CREDENTIALS} \
+          --parameter ssh_user=$INSTANCE_USER \
           -t dns_service.yaml \
           ${STACK_NAME}
 set +x
@@ -51,7 +55,7 @@ retry stack_complete ${STACK_NAME}
 #
 python bin/stack_data.py \
        --zone $ZONE \
-       --update-key bKcZ4P2FhWKRQoWtx5F33w== \
+       --update-key ${UPDATE_KEY}\
        > dns_stack_data.yaml
 
 #
@@ -65,8 +69,9 @@ sleep 30
 #
 # Apply the playbook to the OSP instances to create a DNS service
 #
+export ANSIBLE_HOST_KEY_CHECKING=False
 ansible-playbook -i inventory \
-  --become --user cloud-user --private-key ${PRIVATE_KEY_FILE} \
+  --become --user $INSTANCE_USER --private-key ${PRIVATE_KEY_FILE} \
   --ssh-common-args "-o StrictHostKeyChecking=no" \
   ../dns-service-playbooks/playbooks/bind-server.yml
 

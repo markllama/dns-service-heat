@@ -22,10 +22,10 @@ SAT6_ACTIVATIONKEY=${SAT6_ACTIVATIONKEY:-'{{sat6_activationkey}}'}
 set -eu
 set -x
 
-source /usr/local/lib/notify.sh
-
 # Return the final non-zero exit code of a failed pipe (or 0 for success)
 set -o pipefail
+
+echo "Start RHN register"
 
 function retry() {
     for I in {1..5} ; do
@@ -79,6 +79,7 @@ if use_satellite6 ; then
 elif use_rhn ; then
     register_rhn $RHN_USERNAME $RHN_PASSWORD
 else
+    echo "No RHN credentials provided"
     exit 0
 fi
 

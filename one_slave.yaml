@@ -168,6 +168,7 @@ resources:
       - config: {get_resource: included_files}
       - config: {get_resource: set_hostname}
       - config: {get_resource: rhn_register}
+      - config: {get_resource: install_python}
       - config: {get_resource: install_complete}
 
   included_files:
@@ -209,6 +210,11 @@ resources:
             '{{sat6_organization}}': {get_param: sat6_organization}
             '{{sat6_activationkey}}': {get_param: sat6_activationkey}
           template: {get_file: fragments/rhn-register.sh}
+
+  install_python:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: fragments/install_python.sh}
 
   install_complete:
     type: OS::Heat::SoftwareConfig
