@@ -3,13 +3,14 @@
 # Add an A record to a DNS server via RFC 2136 dynamic update
 #
 
-import os
+import os,sys
 from argparse import ArgumentParser
 
 # python2-dns
 import dns.query
 import dns.tsigkeyring
 import dns.update
+import dns.rcode
 
 
 def add_a_record(server, zone, key, name, address, ttl=300):
@@ -36,4 +37,9 @@ if __name__ == "__main__":
         return parser.parse_args()
 
     opts = process_arguments()
-    add_a_record(opts.server, opts.zone, opts.key, opts.name, opts.address, opts.ttl)
+    r = add_a_record(opts.server, opts.zone, opts.key, opts.name, opts.address, opts.ttl)
+
+    if r.rcode() != dns.rcode.NOERROR:
+        print "ERROR: update failed: %s" % dns.rcode.to_text(r.rcode())
+        sys.exit(r.rcode())
+
