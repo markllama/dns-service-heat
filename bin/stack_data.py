@@ -17,10 +17,10 @@ def parse_cli():
     opts.add_option("-U", "--auth-url", default=os.environ['OS_AUTH_URL'])
 
     opts.add_option("-z", "--zone", default="example.com")
-    opts.add_option("-c", "--contact", default="admin.example.com")
-    opts.add_option("-k", "--update-key", default=os.getenv('UPDATE_KEY'))
+#    opts.add_option("-c", "--contact", default="admin.example.com")
+#    opts.add_option("-k", "--update-key", default=os.getenv('UPDATE_KEY'))
 
-    opts.add_option("-n", "--network", default="dns-network")
+    opts.add_option("-n", "--network", default=None) # dns-network
     opts.add_option("-m", "--master", default="ns-master")
     opts.add_option("-s", "--slave-prefix", default="ns")
 
@@ -29,7 +29,8 @@ def parse_cli():
     return opts.parse_args()
 
 def floating_ip(server, network=None):
-    # if network == None use 1st network
+    if network == None:
+        network = server.addresses.keys()[0]
     entry = None
     for interface in server.addresses[network]:
         if interface['OS-EXT-IPS:type'] == 'floating':
@@ -49,12 +50,12 @@ if __name__ == "__main__":
 
     # INPUTS
     struct['zone'] = opts.zone
-    struct['contact'] = opts.contact
-    struct['update_key'] = opts.update_key
-    if len(opts.forwarders) > 0:
-        struct['forwarders'] = opts.forwarders
-    else:
-        struct['forwarders'] = resolv_conf_nameservers()
+    #struct['contact'] = opts.contact
+    #struct['update_key'] = opts.update_key
+    #if len(opts.forwarders) > 0:
+    #    struct['forwarders'] = opts.forwarders
+    #else:
+    #    struct['forwarders'] = resolv_conf_nameservers()
 
     zone_re = re.compile("\.%s$" % opts.zone)
     master_re = re.compile("^(%s)\.%s" % (opts.master, opts.zone))
