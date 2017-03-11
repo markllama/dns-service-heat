@@ -1,15 +1,11 @@
 #!/bin/sh
+#
+# 
+#
 
-#DNS_SPEC=${DNS_SPEC:-dns_service_parameters.yaml}
-#ZONE=${ZONE:-example.com}
-#UPDATE_KEY=${UPDATE_KEY:-"bKcZ4P2FhWKRQoWtx5F33w=="}
-#STACK_NAME=${STACK_NAME:-dns-service}
-#RHN_CREDENTIALS="-e rhn_credentials.yaml"
-#INSTANCE_USER=fedora
-
-#PRIVATE_KEY_FILE=${PRIVATE_KEY_FILE:-~/.ssh/dns_stack_key_rsa}
-#[ -r $PRIVATE_KEY_FILE ] || (echo no key file $PRIVATE_KEY_FILE && exit 1)
-
+#
+#
+#
 function parse_args() {
     while getopts "c:k:K:n:N:P:s:S:z:" arg ; do
         case $arg in
@@ -69,10 +65,9 @@ function set_defaults() {
 
 # Get local nameserver list from /etc/resolv.con
 function local_nameservers() {
-    # Get the nameserver list, replace newlines with commas, quotes around addresses
+    # Get the nameserver list, replace newlines with commas
     grep nameserver /etc/resolv.conf \
         | awk '{print $2}' \
-        | sed -e 's/^/"/' -e 's/$/"/' \
         | sed ':a;N;$!ba;s/\n/,/g'
 }
 
@@ -108,30 +103,48 @@ function create_stack() {
               --parameter dns_forwarders=${FORWARDERS} \
               --parameter ssh_key_name=${SSH_KEY_NAME} \
               -t dns_service.yaml ${STACK_NAME}
+}
 
+function stack_status() {
+		openstack stack show $1 -f json | jq '.stack_status' | tr -d \"
 }
 
 function stack_complete() {
-		# $1 = STACK_NAME
-		[ $(openstack stack show $1 -f json | jq '.stack_status' | tr -d \") == "CREATE_COMPLETE" ]
+		local STATUS=$(stack_status $1)
+		[ ${STATUS} == 'CREATE_COMPLETE' -o ${STATUS} == 'CREATE_FAILED' ]
 }
 
 function ssh_user_from_stack() {
-  openstack stack show $1 -f json | jq '.parameters.ssh_user' | cut -d \"
+  openstack stack show $1 -f json | jq '.parameters.ssh_user'
 }
 
 function generate_inventory() {
     # Write a YAML file as input to jinja to create the inventory
     # master and slave name/ip information comes from OSP
+
+		F=$(echo $FORWARDERS | sed -e 's/,/", "/g' -e 's/^/"/' -e 's/$/"/')
+		
     (
         cat <<EOF
-contact: ${ZONE_CONTACT}
-forwarders: "${FORWARDERS}"
+contact: "${ZONE_CONTACT}"
+forwarders: [ ${F} ]
 update_key: ${DNS_UPDATE_KEY}
 EOF
          python bin/stack_data.py --zone osp10.e2e.bos.redhat.com
-    ) |  jinja2-2.7 ansible/inventory.j2 > inventory
+    ) > stack_data.yaml
+		jinja2-2.7 inventory.j2 stack_data.yaml > inventory
     
+}
+
+function configure_dns_services() {
+		SSH_USER_NAME=$(ssh_user_from_stack ${STACK_NAME})
+
+		export ANSIBLE_HOST_KEY_CHECKING=False
+		ansible-playbook \
+				-i inventory \
+				--become --user ${SSH_USER_NAME} \
+				--private-key ${PRIVATE_KEY_FILE} \
+				../dns-service-playbooks/playbooks/bind-server.yml
 }
 
 # =============================================================================
@@ -145,13 +158,11 @@ set_defaults
 create_stack
 retry stack_complete ${STACK_NAME}
 
+if [ $(stack_status ${STACK_NAME}) == "CREATE_FAILED" ] ; then
+		echo "Create failed"
+		exit 1
+fi
+
 generate_inventory
 
-exit
-
-SSH_USER_NAME=$(ssh_user_from_stack ${STACK_NAME})
-
-export ANSIBLE_HOST_KEY_CHECKING=False
-ansible-playbook -i inventory \
-  --become --user ${SSH_USER_NAME} --private-key ${PRIVATE_KEY_FILE} \
-  ../dns-service-playbooks/playbooks/bind-server.yml
+configure_dns_services
