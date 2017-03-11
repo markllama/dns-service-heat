@@ -1,8 +1,0 @@
-parameters:
-  external_network: public_network
-  service_network: dns-network
-  service_subnet: dns-subnet
-  slave_count: 3
-  image: rhel7
-  ssh_key_name: ocp3
-  domain_name: dns.example.com
