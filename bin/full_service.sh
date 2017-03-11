@@ -7,7 +7,7 @@
 #
 #
 function parse_args() {
-    while getopts "c:k:K:n:N:P:s:S:z:" arg ; do
+    while getopts "c:k:K:n:N:P:R:s:S:z:" arg ; do
         case $arg in
             k) DNS_UPDATE_KEY=$OPTARG ;;
             s) SLAVES=$OPTARG ;;
@@ -92,7 +92,7 @@ function retry() {
 function create_stack() {
 
     # RHN credentials are only needed for RHEL images in the SERVER SPEC
-    [ -z "$RHN_CREDENTIALS" ] || local RHN_CREDENTIALS_ARG="-e $RHN_CREDENTIALS"
+    [ -z "$RHN_CREDENTIALS_SPEC" ] || local RHN_CREDENTIALS_ARG="-e $RHN_CREDENTIALS_SPEC"
 
     openstack stack create \
               -e ${SERVER_SPEC} \
@@ -156,6 +156,7 @@ parse_args $@
 set_defaults
 
 create_stack
+
 retry stack_complete ${STACK_NAME}
 
 if [ $(stack_status ${STACK_NAME}) == "CREATE_FAILED" ] ; then
