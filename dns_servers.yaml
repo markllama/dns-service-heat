@@ -135,7 +135,7 @@ parameters:
 resources:
 
   master:
-    type: bind-master.yaml
+    type: master.yaml
     properties:
       image: {get_param: image}
       flavor: {get_param: flavor}
