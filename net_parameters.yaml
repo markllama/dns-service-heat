@@ -1,3 +1,0 @@
-parameters:
-  external_network: public_network
-  dns_nameservers: 10.19.114.41
