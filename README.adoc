@@ -26,9 +26,9 @@ git clone {gitroot}/dns-service-playbooks.git
 
 === Input Values
 
-ZONE:
+ZONE::
   The DNS zone to be served +
-  Type: string
+  Type: string +
   Example: `example.com`
 
 DNS_UPDATE_KEY::
@@ -40,7 +40,6 @@ DNS_UPDATE_KEY::
 SERVER_SPEC_FILE::
   The name of a YAML file containing the Nova instance specification values. +
   Example: +
-
 ----
 parameters:
   flavor: m1.small
@@ -48,5 +47,10 @@ parameters:
   ssh_user: cloud-user
 ----
 
-
+EXTERNAL_NETWORK_NAME::
+  The name of an existing Neutron network in the OSP environment which
+  allows inbound and outbound traffic. +
+  Type: string +
+  Example: public_network
+  
 
