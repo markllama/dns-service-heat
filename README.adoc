@@ -17,10 +17,10 @@ amount of glue code is still required.
 === Get the GIT repository
 
 .Clone the Heat and Ansible repositories
-----
+
     git clone {gitroot}/dns-service-heat.git
     git clone {gitroot}/dns-service-playbooks.git
-----
+
 
 === Input Values
 
