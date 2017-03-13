@@ -39,7 +39,7 @@ DNS_UPDATE_KEY::
 
 SERVER_SPEC_FILE::
   The name of a YAML file containing the Nova instance specification values. +
-  Example:
+  Example: +
   `
   parameters: +
     flavor: m1.small +
