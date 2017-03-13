@@ -38,15 +38,14 @@ DNS_UPDATE_KEY::
   `rndc-confgen(8)`.
 
 SERVER_SPEC_FILE::
-  A YAML file containing the Nova instance specification values. +
-  +
+  The name of a YAML file containing the Nova instance specification values. +
   Example:
-  ----
-  parameters:
-    flavor: m1.small
-    image: rhel73
-    ssh_user: cloud-user
-  ----
+  `
+  parameters: +
+    flavor: m1.small +
+    image: rhel73 +
+    ssh_user: cloud-user +
+  `
   
 
 
