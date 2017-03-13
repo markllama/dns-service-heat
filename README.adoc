@@ -18,6 +18,7 @@ amount of glue code is still required.
 
 .Clone the Heat and Ansible repositories
 
+[subs=attributes]
 ----
 git clone {gitroot}/dns-service-heat.git
 git clone {gitroot}/dns-service-playbooks.git
