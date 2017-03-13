@@ -7,6 +7,7 @@ OpenStack Heat stack.  The goal is to de-mystify DNS services and
 deployments for low level delegated sub-domains.  It is NOT to provide
 enterprise scale and quality DNS services.
 
+The service deployed will include 
 == Deployment Procedure
 
 The stack is deployed using a set of Heat templates and an Ansible
@@ -25,6 +26,8 @@ git clone {gitroot}/dns-service-playbooks.git
 ----
 
 === Input Values
+
+==== Required Values
 
 ZONE::
   The DNS zone to be served +
@@ -51,6 +54,42 @@ EXTERNAL_NETWORK_NAME::
   The name of an existing Neutron network in the OSP environment which
   allows inbound and outbound traffic. +
   Type: string +
-  Example: public_network
-  
+  Example: `ext-net`
 
+KEYPAIR_NAME::
+  The name of an existing Nova keypair +
+  Type: string +
+  Example: `ocp_key`
+  
+PRIVATE_KEY_FILE::
+  The name of a file containing the private key matching the
+  'KEYPAIR_NAME' above +
+  Type: string +
+  Example: `/home/user/.ssh/ocp_key_rsa`
+
+==== Optional Values
+
+== Deploying the DNS stack
+
+The full stack can be deployed and configured using the helper script
+in `bin/full_service.sh`.  This script takes old style single-hypen
+arguments.  Run it with `-h` to see the usage information.
+
+
+----
+cd dns-service-heat
+sh bin/full_service.sh \
+  -z ocp3.example.com \
+  -S env_server_rhel.yaml \
+  -R rhn_credentials.yaml \
+  -u "not_a_real_key"
+  -e ext-net \
+  -k ocp3 \
+  -K ~/ocp3_rsa
+----
+
+The script takes two distinct actions:
+
+1. Create a heat stack with network connectivity and instances created
+and named to specification
+1. Apply an Ansible playbook to the instances to configure the DNS service
