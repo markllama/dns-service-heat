@@ -26,8 +26,9 @@ git clone {gitroot}/dns-service-playbooks.git
 
 === Input Values
 
-zone:: the DNS zone to be served
-  String: 
+zone::
+  The DNS zone to be served +
+  Type: string
 
 
 
