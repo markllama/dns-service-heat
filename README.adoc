@@ -1,3 +1,5 @@
+:gitroot: https://github.com/markllama
+
 == DNS Service for OpenStack with Heat
 
 This repository defines a simple distributed DNS service within an
@@ -5,67 +7,25 @@ OpenStack Heat stack.  The goal is to de-mystify DNS services and
 deployments for low level delegated sub-domains.  It is NOT to provide
 enterprise scale and quality DNS services.
 
-== Inputs
+== Deployment Procedure
 
-----
-parameters:
-  external_network: public_network
-  slave_count: 3
-  image: rhel7
-  ssh_key_name: ocp3
-  domain_name: dns.example.com
-  dns_nameservers: 10.19.114.42,10.19.114.2,10.11.5.19
-----
+The stack is deployed using a set of Heat templates and an Ansible
+playbook driven by a BASH script. In the future these will be
+collapsed so the entire process is driven by Ansible.  For now a small
+amount of glue code is still required.
 
-== Deploying
+=== Get the GIT repository
 
+.Clone the Heat and Ansible repositories
 ----
-openstack stack create -e dns_service_parameters.yaml [-e rhn_credentials.yaml] -t dns_service.yaml dns-service
-
-----
-----
-openstack stack create -e dns_service_parameters.yaml -e rhn_credentials.yaml \
-  -t dns_service.yaml  dns-service
+    git clone {gitroot}/dns-service-heat.git
+    git clone {gitroot}/dns-service-playbooks.git
 ----
 
-----
-openstack server ssh -i ~/osp-keys/ocp3_rsa -l cloud-user -o StrictHostKeyChecking=no \
-  ns-master.dns.example.com
-----
+=== Input Values
+
+zone:: the DNS zone to be served
+  String: 
 
 
-== Deploying On An Existing Network
 
-----
-openstack stack create \
-  --parameter external_network=public_network \
-  --parameter dns_nameservers=10.19.114.41,10.19.114.2,10.11.5.19 \
-  -t dns_network.yaml \
-  dns-network
-----
-
-----
-openstack stack create -e dns_servers_parameters.yaml -e rhn_credentials.yaml  -t dns_servers.yaml  dns-servers
-----
-
-== Configure the DNS Service
-
-----
-python bin/stack_data.py --zone dns.example.com --update-key "your key" > dns_stack_dynamic.yaml
-----
-
-----
-jinja2-2.7 ansible/inventory.j2 dns_stack_dynamic.yaml > inventory
-----
-
-----
-ansible-playbook -i inventory --become --user cloud-user --private-key ../keys/ocp3_rsa --ssh-common-args "-o StrictHostKeyChecking=no" ../dns-service-playbooks/playbooks/bind-server.yml
-----
-
-
-== Add the glue records
-
-----
-python bin/add_a_record.py --server <master> --zone dns.example.com. --key <key> ns0 <addr>
-python bin/add_ns_record.py --server <master> --zone dns.example.com. --key <key> ns0.dns.example.com.
-----
