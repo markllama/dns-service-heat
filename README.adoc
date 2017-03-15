@@ -95,6 +95,23 @@ and named to specification
 1. Apply an Ansible playbook to the instances to configure the DNS service
 
 
+== Setting the DNS entries from an OSP heat stack
+
+This stack is, in the end targeted for use by an OpenShift service
+installed on openstack.  The openshift-ansible installation process
+depends on the existance of a DNS A record for each instance in the
+OpenShift cluster.  Instances which also have a floating IP address
+get a second DNS A record for the public name.
+
+These two scripts below extract the hostname and IP addresses of the O
+
+----
+ python bin/ocp_host_info.py -n <network name> --zone <zone> > osp_host_spec.yaml
+ DNS_UPDATE_KEY="not a real key"
+ python bin/prime_zones.py -s <nameserver ip>  osp_host_spec.yaml 
+
+----
+
 == Requirements
 
 * python2
@@ -102,3 +119,4 @@ and named to specification
 * python2-dns
 * python-jinja2
 * jq
+
