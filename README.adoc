@@ -93,3 +93,12 @@ The script takes two distinct actions:
 1. Create a heat stack with network connectivity and instances created
 and named to specification
 1. Apply an Ansible playbook to the instances to configure the DNS service
+
+
+== Requirements
+
+* python2
+* python-openstackclient
+* python2-dns
+* python-jinja2
+* jq

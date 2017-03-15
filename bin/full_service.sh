@@ -265,7 +265,7 @@ forwarders: [ ${F} ]
 update_key: ${DNS_UPDATE_KEY}
 EOF
         python bin/stack_data.py --zone ${ZONE}
-    ) | jinja2-2.7 inventory.j2 > inventory.${STACK_NAME}
+    ) | python bin/transform.py inventory.j2 > inventory.${STACK_NAME}
 
 #    ) > stack_data.yaml
 #		jinja2-2.7 inventory.j2 stack_data.yaml > inventory    
