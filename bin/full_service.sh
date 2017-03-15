@@ -280,7 +280,7 @@ function configure_dns_services() {
 				-i inventory.${STACK_NAME} \
 				--become --user ${SSH_USER_NAME} \
 				--private-key ${PRIVATE_KEY_FILE} \
-				../dns-service-playbooks/playbooks/bind-server.yml
+				ansible/bind-server.yml
 }
 
 # =============================================================================
