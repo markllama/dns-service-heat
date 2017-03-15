@@ -26,7 +26,7 @@ if __name__ == "__main__":
     def process_arguments():
         parser = ArgumentParser()
         parser.add_argument("-s", "--server", type=str, default="127.0.0.1")
-        parser.add_argument("-k", "--key", type=str, default=os.getenv("DNS_KEY"))
+        parser.add_argument("-k", "--key", type=str, default=os.getenv("DNS_UPDATE_KEY"))
         parser.add_argument("zone_spec")
         
         return parser.parse_args()
