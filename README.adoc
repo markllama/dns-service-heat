@@ -107,7 +107,7 @@ These two scripts below extract the hostname and IP addresses of the O
 
 ----
  python bin/ocp_host_info.py -n <network name> --zone <zone> > osp_host_spec.yaml
- DNS_UPDATE_KEY="not a real key"
+ DNS_UPDATE_KEY="not a real key" # if not already set
  python bin/prime_zones.py -s <nameserver ip>  osp_host_spec.yaml 
 
 ----
