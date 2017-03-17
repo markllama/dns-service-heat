@@ -154,10 +154,10 @@ resources:
       rhn_pool: {get_param: rhn_pool}
 
 outputs:
-  master_ip_address:
-    description: The floating IP address of the master
-    value: {get_attr: [hosts, master_ip_address]}
-
-  slave_ip_addresses:
-    description: The floating IP addresses of the slave nodes
-    value: {get_attr: [hosts, slave_ip_addresses]}
+  ip_address:
+    description: The floating IP address of the DNS servers
+    value:
+      master:
+        name: {get_param: master_hostname}
+        address: {get_attr: [hosts, master_ip_address]}
+      slaves: {get_attr: [hosts, slave_entries]}

@@ -201,5 +201,5 @@ outputs:
   master_ip_address:
     value: {get_attr: [master, ip_address]}
 
-  slave_ip_addresses:
-    value: {get_attr: [slaves, ip_addresses]}
+  slave_entries:
+    value: {get_attr: [slaves, entries]}

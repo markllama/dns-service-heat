@@ -172,5 +172,5 @@ resources:
 
 
 outputs:
-  ip_addresses:
-    value: {get_attr: [slaves, ip_address]}
+  entries:
+    value: {get_attr: [slaves, entry]}
