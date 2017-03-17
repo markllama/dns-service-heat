@@ -1,0 +1,10 @@
+stack_name: dns
+domain_name: example.com
+dns_forwarders: [8.8.8.8, 8.8.4.4]
+external_network: public
+image: centos72
+ssh_key_name: default
+slave_count: 3
+
+# CHANGE THIS:
+update_key: "gbju9OdeOYjJaSukj+/yRw=="
