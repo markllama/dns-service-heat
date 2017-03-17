@@ -41,12 +41,12 @@ parameters:
     type: string
     constraints:
       - custom_constraint: glance.image
-      
+
   flavor:
     description: >
       The name of the OpenStack instance flavor to use for DNS servers
     type: string
-    default: m1.small    
+    default: m1.small
     constraints:
       - custom_constraint: nova.flavor
 
@@ -144,7 +144,7 @@ resources:
       - port: {get_resource: port}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: init}
-  
+
   port:
     type: OS::Neutron::Port
     properties:
@@ -166,7 +166,7 @@ resources:
     properties:
       cloud_config:
         hostname: {get_param: hostname}
-        fqdn: 
+        fqdn:
           str_replace:
             template: "HOSTNAME.DOMAIN"
             params:
@@ -183,7 +183,7 @@ resources:
       - config: {get_resource: rhn_register}
       - config: {get_resource: install_python}
       - config: {get_resource: install_complete}
-        
+
   included_files:
     type: OS::Heat::CloudConfig
     properties:
@@ -235,3 +235,7 @@ resources:
   wait_handle:
     type: OS::Heat::WaitConditionHandle
 
+
+outputs:
+  ip_address:
+    value: {get_attr: [floating_ip, floating_ip_address]}

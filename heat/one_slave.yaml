@@ -55,7 +55,7 @@ parameters:
     type: string
     constraints:
       - custom_constraint: glance.image
-      
+
   flavor:
     description: >
       The name of the OpenStack instance flavor to use for DNS servers
@@ -144,7 +144,7 @@ resources:
       - port: {get_resource: port}
       scheduler_hints:
         group: {get_param: server_group}
-        
+
   port:
     type: OS::Neutron::Port
     properties:
@@ -189,7 +189,7 @@ resources:
     properties:
       cloud_config:
         hostname: {get_param: hostname}
-        fqdn: 
+        fqdn:
           str_replace:
             template: "HOSTNAME.DOMAIN"
             params:
@@ -234,3 +234,7 @@ resources:
   wait_handle:
     type: OS::Heat::WaitConditionHandle
 
+
+outputs:
+  ip_address:
+    value: {get_attr: [floating_ip, floating_ip_address]}

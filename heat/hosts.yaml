@@ -67,12 +67,12 @@ parameters:
     type: string
     constraints:
       - custom_constraint: glance.image
-      
+
   flavor:
     description: >
       The name of the OpenStack instance flavor to use for DNS servers
     type: string
-    default: m1.small    
+    default: m1.small
     constraints:
       - custom_constraint: nova.flavor
 
@@ -195,3 +195,11 @@ resources:
           protocol: udp
           port_range_min: 53
           port_range_max: 53
+
+
+outputs:
+  master_ip_address:
+    value: {get_attr: [master, ip_address]}
+
+  slave_ip_addresses:
+    value: {get_attr: [slaves, ip_addresses]}

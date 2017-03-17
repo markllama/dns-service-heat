@@ -67,12 +67,12 @@ parameters:
     type: string
     constraints:
       - custom_constraint: glance.image
-      
+
   flavor:
     description: >
       The name of the OpenStack instance flavor to use for DNS servers
     type: string
-    default: m1.small    
+    default: m1.small
     constraints:
       - custom_constraint: nova.flavor
 
@@ -133,7 +133,7 @@ parameters:
     default: ''
 
 resources:
-  
+
   slaves:
     type: OS::Heat::ResourceGroup
     properties:
@@ -170,3 +170,7 @@ resources:
       policies: {get_param: slave_server_group_policies}
 
 
+
+outputs:
+  ip_addresses:
+    value: {get_attr: [slaves, ip_address]}

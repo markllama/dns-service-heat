@@ -18,7 +18,7 @@ parameters:
   dns_forwarders:
     type: comma_delimited_list
     description: Addresses of a dns nameserver reachable in your environment
-      
+
   master_hostname:
     description: >
       The default prefix for slave server hostnames
@@ -58,12 +58,12 @@ parameters:
     type: string
     constraints:
       - custom_constraint: glance.image
-      
+
   flavor:
     description: >
       The name of the OpenStack instance flavor to use for DNS servers
     type: string
-    default: m1.small    
+    default: m1.small
     constraints:
       - custom_constraint: nova.flavor
 
@@ -152,3 +152,12 @@ resources:
       sat6_organization: {get_param: sat6_organization}
       sat6_activationkey: {get_param: sat6_activationkey}
       rhn_pool: {get_param: rhn_pool}
+
+outputs:
+  master_ip_address:
+    description: The floating IP address of the master
+    value: {get_attr: [hosts, master_ip_address]}
+
+  slave_ip_addresses:
+    description: The floating IP addresses of the slave nodes
+    value: {get_attr: [hosts, slave_ip_addresses]}
