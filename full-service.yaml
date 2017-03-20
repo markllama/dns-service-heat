@@ -65,7 +65,7 @@
       server_hostname: "{{ sat6_hostname|default(None) }}"
       org_id: "{{ sat6_organization|default(None) }}"
       activationkey: "{{ sat6_activationkey|default(None) }}"
-    when: rhn_username and rhn_password and rhn_pool == ""
+    when: rhn_username|default and rhn_password|default and rhn_pool|default == ""
 
   - name: Subscribe to RHN and attach a pool
     redhat_subscription:
@@ -75,7 +75,7 @@
       server_hostname: "{{ sat6_hostname|default(None) }}"
       org_id: "{{ sat6_organization|default(None) }}"
       activationkey: "{{ sat6_activationkey|default(None) }}"
-    when: rhn_username and rhn_password and rhn_pool
+    when: rhn_username|default and rhn_password|default and rhn_pool|default
 
 
 
