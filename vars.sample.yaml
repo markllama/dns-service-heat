@@ -8,3 +8,13 @@ slave_count: 3
 
 # CHANGE THIS:
 update_key: "gbju9OdeOYjJaSukj+/yRw=="
+
+# For Red Hat Enterprise Linux:
+#
+# rhn_username: ""
+# rhn_password: ""
+# rhn_pool: ""
+
+# sat6_hostname
+# sat6_organization
+# sat6_activationkey

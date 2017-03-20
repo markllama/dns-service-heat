@@ -62,6 +62,9 @@
       username: "{{ rhn_username }}"
       password: "{{ rhn_password }}"
       autosubscribe: true
+      server_hostname: "{{ sat6_hostname|default(None) }}"
+      org_id: "{{ sat6_organization|default(None) }}"
+      activationkey: "{{ sat6_activationkey|default(None) }}"
     when: rhn_username and rhn_password and rhn_pool == ""
 
   - name: Subscribe to RHN and attach a pool
@@ -69,6 +72,9 @@
       username: "{{ rhn_username }}"
       password: "{{ rhn_password }}"
       pool_ids: ["{{ rhn_pool }}"]
+      server_hostname: "{{ sat6_hostname|default(None) }}"
+      org_id: "{{ sat6_organization|default(None) }}"
+      activationkey: "{{ sat6_activationkey|default(None) }}"
     when: rhn_username and rhn_password and rhn_pool
 
 
