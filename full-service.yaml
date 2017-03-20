@@ -53,6 +53,26 @@
       port: 22
     with_items: "{{ groups['all'] }}"
 
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Subscribe to RHN and auto-attach
+    redhat_subscription:
+      username: "{{ rhn_username }}"
+      password: "{{ rhn_password }}"
+      autosubscribe: true
+    when: rhn_username and rhn_password and rhn_pool == ""
+
+  - name: Subscribe to RHN and attach a pool
+    redhat_subscription:
+      username: "{{ rhn_username }}"
+      password: "{{ rhn_password }}"
+      pool_ids: ["{{ rhn_pool }}"]
+    when: rhn_username and rhn_password and rhn_pool
+
+
+
 # - include: ansible/bind-server.yml
 # Create a bind master
 - hosts: all
