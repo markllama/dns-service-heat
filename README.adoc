@@ -79,6 +79,20 @@ EXTERNAL_NETWORK_NAME::
   Type: string +
   Example: `ext-net`
 
+IMAGE::
+  The name of a Glance image that will be used to for the DNS virtual
+  machines. +
+  Type: string +
+  Example: `centos7`
+
+SSH_USER::
+
+  The username you can SSH as into the deployed VMs. This depends on
+  the `image` you're using. For RHEL, it's `cloud-user`, for CentOS
+  it's `centos`, for Fedora it's `fedora`. +
+  Type: string +
+  Example: `centos`
+
 KEYPAIR_NAME::
   The name of an existing Nova keypair +
   Type: string +

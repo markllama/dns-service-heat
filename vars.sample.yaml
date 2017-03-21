@@ -1,13 +1,18 @@
-stack_name: dns
+stack_name: dns-service
 domain_name: example.com
 dns_forwarders: [8.8.8.8, 8.8.4.4]
 external_network: public
-image: centos72
-ssh_key_name: default
 slave_count: 3
 
+image: centos72
+# SSH user is specific to the image. It's the user you can use to SSH to the VM
+ssh_user: centos
+
+# Key name from `openstack keypair list`
+ssh_key_name: default
+
 # CHANGE THIS:
-update_key: "gbju9OdeOYjJaSukj+/yRw=="
+update_key: "VXQsVJgDtEj1CFPjnt/OK3ilgJyAzT6OeY9CDoqa0/Q="
 
 # For Red Hat Enterprise Linux:
 #

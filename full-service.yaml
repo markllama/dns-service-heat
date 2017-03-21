@@ -1,56 +1,89 @@
 ---
-
 - name: Deploy the DNS servers
   hosts: localhost
   connection: local
   become: no
   gather_facts: no
+  vars:
+    stack_name: dns-service
+    domain_name: example.com
+    flavor: m1.small
+    slave_count: 3
+    slave_server_group_policies: ['anti-affinity']
+    contact: admin@{{ domain_name }}
   tasks:
+
+  - name: Check whether the stack exists already
+    command: "openstack stack show {{ stack_name }}"
+    ignore_errors: yes
+    register: stack_check
+
   - name: Create the Heat Stack
     os_stack:
       name: "{{ stack_name }}"
       template: dns_service.yaml
       parameters:
-        domain_name: "{{ domain_name | default('example.com') }}"
+        domain_name: "{{ domain_name }}"
         external_network:  "{{ external_network }}"
         ssh_key_name: "{{ ssh_key_name }}"
         dns_forwarders: "{{ dns_forwarders }}"
         image: "{{ image }}"
+        flavor: "{{ flavor }}"
 
-        slave_count: "{{ slave_count | default(3) }}"
+        slave_count: "{{ slave_count }}"
         slave_server_group_policies: "{{ slave_server_group_policies }}"
-
     register: stack_output
+    when: stack_check.rc != 0
 
-  - debug: var=stack_output
+  - name: Register stack output
+    command: >
+      openstack stack output show -f value -c output_value
+      {{ stack_name }} ip_address
+    register: stack_output_raw
+
+  - set_fact:
+      stack_output: "{{ stack_output_raw.stdout|from_json }}"
 
   - name: Add the master to the inventory
     add_host:
-      name: "{{ stack_output.stack.outputs[0].output_value.master.address }}"
+      name: "{{ stack_output.master.address }}"
       groups: masters
       zone: "{{ domain_name }}"
-      masters: [" {{ stack_output.stack.outputs[0].output_value.master.name }} "]
+      domain_name: "{{ domain_name }}"
+      masters: [" {{ stack_output.master.name }} "]
       forwarders: "{{ dns_forwarders }}"
-      contact: "{{ contact | default('admin@{{ domain_name }}') }}"
-      nameservers: "{{ [stack_output.stack.outputs[0].output_value.master] + stack_output.stack.outputs[0].output_value.slaves }}"
+      contact: "{{ contact }}"
+      nameservers: "{{ [stack_output.master] + stack_output.slaves }}"
+      ansible_user: "{{ ssh_user }}"
 
   - name: Add the slaves to the inventory
     add_host:
       name: "{{ item.address }}"
       groups: slaves
       zone: "{{ domain_name }}"
-      masters: ["{{ stack_output.stack.outputs[0].output_value.master.name }}"]
+      domain_name: "{{ domain_name }}"
+      masters: ["{{ stack_output.master.name }}"]
       forwarders: "{{ dns_forwarders }}"
-      contact: "{{ contact | default('admin@{{ domain_name }}') }}"
-      nameservers: "{{ [stack_output.stack.outputs[0].output_value.master] + stack_output.stack.outputs[0].output_value.slaves }}"
-    with_items: "{{ stack_output.stack.outputs[0].output_value.slaves }}"
-
-  - debug: var=hostvars
+      contact: "{{ contact }}"
+      nameservers: "{{ [stack_output.master] + stack_output.slaves }}"
+      ansible_user: "{{ ssh_user }}"
+    with_items: "{{ stack_output.slaves }}"
 
   - name: Wait for the deployed servers
     wait_for:
       host: "{{ item }}"
       port: 22
+    with_items: "{{ groups['all'] }}"
+
+  - name: Verify the servers can be SSHd into
+    command: >
+      {{ansible_ssh_executable}} {{ansible_ssh_common_args}}
+      -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null'
+      -p {{ansible_port|default(22)}} {{ssh_user}}@{{ item }} /bin/true
+    register: result
+    retries: 10
+    delay: 1
+    until: result.rc == 0
     with_items: "{{ groups['all'] }}"
 
 - hosts: all
