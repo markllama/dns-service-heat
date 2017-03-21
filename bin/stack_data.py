@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     # TODO: these need better filters
     # Filter the nameserver master host(s) from the complete list
-    struct['masters'] = [h for h in servers if master_re.match(h['name'])]
+    struct['masters'] = [h for h in servers if h and master_re.match(h['name'])]
     # Then match them with their address and create a hash object for each one
     struct['masters'] = [
         {
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     ]
 
     # Filter the slave servers from the list (not masters) 
-    struct['slaves'] = [h for h in servers if  slave_re.match(h['name'])]
+    struct['slaves'] = [h for h in servers if  h and slave_re.match(h['name'])]
     # Then create a simple object with name and IP address
     struct['slaves'] = [
         {

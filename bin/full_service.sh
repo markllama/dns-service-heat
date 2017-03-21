@@ -85,7 +85,7 @@ EOF
 # Process arguments into environment variables
 #
 function parse_args() {
-    while getopts "Ac:Ce:hk:K:n:N:P:R:s:S:u:z:" arg ; do
+    while getopts "Ac:Ce:f:hk:K:n:N:P:R:s:S:u:z:" arg ; do
         case $arg in
             u) DNS_UPDATE_KEY=$OPTARG ;;
             s) SLAVES=$OPTARG ;;
