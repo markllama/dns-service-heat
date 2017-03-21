@@ -26,7 +26,7 @@ if __name__ == "__main__":
     def process_arguments():
         parser = ArgumentParser()
         parser.add_argument("-s", "--server", type=str, default="127.0.0.1")
-        parser.add_argument("-k", "--key", type=str, default=os.getenv("DNS_KEY"))
+        parser.add_argument("-k", "--key", type=str, default=os.getenv("DNS_UPDATE_KEY"))
         parser.add_argument("zone_spec")
         
         return parser.parse_args()
@@ -40,7 +40,7 @@ if __name__ == "__main__":
                                 host['name'], host['address'])
         if response.rcode() != dns.rcode.NOERROR:
             print "ERROR  %s: %s" % (
-                dnr.rcode.to_text(response.rcode()),
+                dns.rcode.to_text(response.rcode()),
                 "%s.%s %s" % (host['name'], zone_spec['zone'], host['address']))
         #print response.rcode()
         
@@ -49,6 +49,6 @@ if __name__ == "__main__":
                                 host['name'], host['address'])
         if response.rcode() != dns.rcode.NOERROR:
             print "ERROR  %s: %s" % (
-                dnr.rcode.to_text(response.rcode()),
+                dns.rcode.to_text(response.rcode()),
                 "%s.%s %s" % (host['name'], zone_spec['zone'], host['address']))
 

@@ -85,7 +85,7 @@ EOF
 # Process arguments into environment variables
 #
 function parse_args() {
-    while getopts "Ac:Ce:hk:K:n:N:P:R:s:S:z:" arg ; do
+    while getopts "Ac:Ce:hk:K:n:N:P:R:s:S:u:z:" arg ; do
         case $arg in
             u) DNS_UPDATE_KEY=$OPTARG ;;
             s) SLAVES=$OPTARG ;;
@@ -265,7 +265,7 @@ forwarders: [ ${F} ]
 update_key: ${DNS_UPDATE_KEY}
 EOF
         python bin/stack_data.py --zone ${ZONE}
-    ) | jinja2-2.7 inventory.j2 > inventory.${STACK_NAME}
+    ) | python bin/transform.py inventory.j2 > inventory.${STACK_NAME}
 
 #    ) > stack_data.yaml
 #		jinja2-2.7 inventory.j2 stack_data.yaml > inventory    
@@ -280,7 +280,7 @@ function configure_dns_services() {
 				-i inventory.${STACK_NAME} \
 				--become --user ${SSH_USER_NAME} \
 				--private-key ${PRIVATE_KEY_FILE} \
-				../dns-service-playbooks/playbooks/bind-server.yml
+				ansible/bind-server.yml
 }
 
 # =============================================================================
