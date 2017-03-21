@@ -7,7 +7,7 @@ from optparse import OptionParser
 
 from novaclient import client
 
-import yaml
+from jinja2 import Environment, FileSystemLoader
 
 def parse_cli():
     opts = OptionParser()
@@ -17,14 +17,16 @@ def parse_cli():
     opts.add_option("-U", "--auth-url", default=os.environ['OS_AUTH_URL'])
 
     opts.add_option("-z", "--zone", default="example.com")
-#    opts.add_option("-c", "--contact", default="admin.example.com")
-#    opts.add_option("-k", "--update-key", default=os.getenv('UPDATE_KEY'))
+    opts.add_option("-c", "--contact", default="admin.example.com.")
+    opts.add_option("-k", "--update-key", default=os.getenv('DNS_UPDATE_KEY'))
 
     opts.add_option("-n", "--network", default=None) # dns-network
     opts.add_option("-m", "--master", default="ns-master")
     opts.add_option("-s", "--slave-prefix", default="ns")
 
     opts.add_option("-f", "--forwarder", type="string", action="append", dest="forwarders", default=[])
+
+    opts.add_option("-t", "--template", type="string", default="inventory.j2")
     
     return opts.parse_args()
 
@@ -50,12 +52,12 @@ if __name__ == "__main__":
 
     # INPUTS
     struct['zone'] = opts.zone
-    #struct['contact'] = opts.contact
-    #struct['update_key'] = opts.update_key
-    #if len(opts.forwarders) > 0:
-    #    struct['forwarders'] = opts.forwarders
-    #else:
-    #    struct['forwarders'] = resolv_conf_nameservers()
+    struct['contact'] = opts.contact
+    struct['update_key'] = opts.update_key
+    if len(opts.forwarders) > 0:
+        struct['forwarders'] = opts.forwarders
+    else:
+        struct['forwarders'] = resolv_conf_nameservers()
 
     zone_re = re.compile("\.%s$" % opts.zone)
     master_re = re.compile("^(%s)\.%s" % (opts.master, opts.zone))
@@ -93,6 +95,5 @@ if __name__ == "__main__":
         } for s in struct['slaves']
     ]
 
-    # Print the data in YAML format
-    print yaml.dump(struct, default_flow_style=False)
-
+    template = Environment(loader=FileSystemLoader(os.getcwd())).get_template(opts.template)
+    print template.render(struct)

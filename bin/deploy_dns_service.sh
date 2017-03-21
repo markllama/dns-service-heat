@@ -260,7 +260,7 @@ function split_forwarders() {
 # master and slave name/ip information comes from OSP
 function generate_inventory() {
 
-    python bin/generate_inventory.py --zone ${ZONE} \
+    python bin/stack_data.py --zone ${ZONE} \
            --contact ${ZONE_CONTACT} \
            -k ${DNS_UPDATE_KEY} \
            $(split_forwarders ${FORWARDERS}) > inventory.${STACK_NAME}

@@ -126,14 +126,14 @@ parameters:
 resources:
 
   network:
-    type: dns_network.yaml
+    type: network.yaml
     properties:
       external_network: {get_param: external_network}
       dns_nameservers: {get_param: dns_forwarders}
 
   hosts:
     depends_on: [network]
-    type: dns_servers.yaml
+    type: hosts.yaml
     properties:
       external_network: {get_param: external_network}
       service_network: {get_attr: [network, dns_network]}
