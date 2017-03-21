@@ -106,7 +106,7 @@ Assuming you put your configuration in `vars.yaml` and you're using a
 CentOS image:
 
 ----
-$ ansible-playbook --user centos full-service.yaml -e @vars.yaml
+$ ansible-playbook full-service.yaml -e @vars.yaml
 ----
 
 If you're deploying Fedora, you must set `--user fedora` and for the newer versions pass this in:
