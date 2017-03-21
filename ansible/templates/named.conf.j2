@@ -27,7 +27,7 @@ options {
 	   reduce such attack surface 
 	*/
 	// recursion yes;
-	forward first;
+	forward only;
         forwarders { {% for ipaddr in forwarders %} {{ ipaddr }} ; {% endfor %} } ;
 
 	// dnssec-enable yes;
