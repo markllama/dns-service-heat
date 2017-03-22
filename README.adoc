@@ -22,7 +22,6 @@ amount of glue code is still required.
 [subs=attributes]
 ----
 git clone {gitroot}/dns-service-heat.git
-git clone {gitroot}/dns-service-playbooks.git
 ----
 
 === Input Values
@@ -78,7 +77,7 @@ arguments.  Run it with `-h` to see the usage information.
 
 ----
 cd dns-service-heat
-sh bin/full_service.sh \
+sh bin/deploy_dns_service.sh \
   -z ocp3.example.com \
   -S env_server_rhel.yaml \
   -R rhn_credentials.yaml \
@@ -88,10 +87,11 @@ sh bin/full_service.sh \
   -K ~/ocp3_rsa
 ----
 
-The script takes two distinct actions:
+The script takes three distinct actions:
 
 1. Create a heat stack with network connectivity and instances created
 and named to specification
+1. Query the instances for hostname and IP address and create an inventory for Ansible
 1. Apply an Ansible playbook to the instances to configure the DNS service
 
 
@@ -116,7 +116,8 @@ These two scripts below extract the hostname and IP addresses of the O
 
 * python2
 * python-openstackclient
-* python2-dns
-* python-jinja2
+* python-dns [RHEL7]
+* python2-dns [Fedora]
+* python-jinja
 * jq
 
