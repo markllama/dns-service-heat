@@ -21,7 +21,7 @@
   - name: Create the Heat Stack
     os_stack:
       name: "{{ stack_name }}"
-      template: dns_service.yaml
+      template: heat/dns_service.yaml
       parameters:
         domain_name: "{{ domain_name }}"
         external_network:  "{{ external_network }}"
