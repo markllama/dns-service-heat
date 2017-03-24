@@ -1,0 +1,195 @@
+---
+- name: Deploy the DNS servers
+  hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+  vars:
+    stack_name: dns-service
+    domain_name: example.com
+    flavor: m1.small
+    slave_count: 3
+    slave_server_group_policies: ['anti-affinity']
+    contact: admin@{{ domain_name }}
+  tasks:
+
+  - name: Check whether the stack exists already
+    command: "openstack stack show {{ stack_name }}"
+    ignore_errors: yes
+    register: stack_check
+
+  - name: Create the Heat Stack
+    os_stack:
+      name: "{{ stack_name }}"
+      template: heat/dns_service.yaml
+      parameters:
+        domain_name: "{{ domain_name }}"
+        external_network:  "{{ external_network }}"
+        ssh_key_name: "{{ ssh_key_name }}"
+        dns_forwarders: "{{ dns_forwarders }}"
+        image: "{{ image }}"
+        flavor: "{{ flavor }}"
+
+        slave_count: "{{ slave_count }}"
+        slave_server_group_policies: "{{ slave_server_group_policies }}"
+    register: stack_output
+    when: stack_check.rc != 0
+
+  - name: Register stack output
+    command: >
+      openstack stack output show -f value -c output_value
+      {{ stack_name }} ip_address
+    register: stack_output_raw
+
+  - set_fact:
+      stack_output: "{{ stack_output_raw.stdout|from_json }}"
+
+  - name: Add the master to the inventory
+    add_host:
+      name: "{{ stack_output.master.address }}"
+      groups: masters
+      zone: "{{ domain_name }}"
+      domain_name: "{{ domain_name }}"
+      masters: [" {{ stack_output.master.name }} "]
+      forwarders: "{{ dns_forwarders }}"
+      contact: "{{ contact }}"
+      nameservers: "{{ [stack_output.master] + stack_output.slaves }}"
+      ansible_user: "{{ ssh_user }}"
+
+  - name: Add the slaves to the inventory
+    add_host:
+      name: "{{ item.address }}"
+      groups: slaves
+      zone: "{{ domain_name }}"
+      domain_name: "{{ domain_name }}"
+      masters: ["{{ stack_output.master.name }}"]
+      forwarders: "{{ dns_forwarders }}"
+      contact: "{{ contact }}"
+      nameservers: "{{ [stack_output.master] + stack_output.slaves }}"
+      ansible_user: "{{ ssh_user }}"
+    with_items: "{{ stack_output.slaves }}"
+
+  - name: Wait for the deployed servers
+    wait_for:
+      host: "{{ item }}"
+      port: 22
+    with_items: "{{ groups['all'] }}"
+
+  - name: Verify the servers can be SSHd into
+    command: >
+      {{ansible_ssh_executable}} {{ansible_ssh_common_args}}
+      -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null'
+      -p {{ansible_port|default(22)}} {{ssh_user}}@{{ item }} /bin/true
+    register: result
+    retries: 10
+    delay: 1
+    until: result.rc == 0
+    with_items: "{{ groups['all'] }}"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Subscribe to RHN and auto-attach
+    redhat_subscription:
+      username: "{{ rhn_username }}"
+      password: "{{ rhn_password }}"
+      autosubscribe: true
+      server_hostname: "{{ sat6_hostname|default(None) }}"
+      org_id: "{{ sat6_organization|default(None) }}"
+      activationkey: "{{ sat6_activationkey|default(None) }}"
+    when: rhn_username|default and rhn_password|default and rhn_pool|default == ""
+
+  - name: Subscribe to RHN and attach a pool
+    redhat_subscription:
+      username: "{{ rhn_username }}"
+      password: "{{ rhn_password }}"
+      pool_ids: ["{{ rhn_pool }}"]
+      server_hostname: "{{ sat6_hostname|default(None) }}"
+      org_id: "{{ sat6_organization|default(None) }}"
+      activationkey: "{{ sat6_activationkey|default(None) }}"
+    when: rhn_username|default and rhn_password|default and rhn_pool|default
+
+
+
+# - include: ansible/bind-server.yml
+# Create a bind master
+- hosts: all
+  become: true
+  tasks:
+
+    - name: firewall daemon
+      action: package name=firewalld state=installed
+
+    - name: firewall python module
+      action: package name=python-firewall state=installed
+
+    - name: install bind utilities
+      action: package name=bind-utils state=installed
+
+    - name: install bind server
+      action: package name=bind state=installed
+
+    - name: firewall service
+      action: systemd name=firewalld enabled=yes state=started
+
+    - name: dns service
+      action: systemd name=named enabled=yes state=started
+
+    - name: dns port
+      action: firewalld zone=public service=dns state=enabled permanent=yes immediate=yes
+
+    - name: named configuration file
+      action: template src=ansible/templates/named.conf.j2 dest=/etc/named.conf
+
+- hosts: masters
+  become: true
+  tasks:
+
+    # On RHEL7 this is python-dns.  On F25 it's python2-dns
+    - name: install python DNS package
+      action: package name=python2-dns state=installed
+      when: (ansible_distribution == "Fedora")
+
+    - name: install python DNS package
+      action: package name=python-dns state=installed
+      when: (ansible_distribution == "RHEL" or ansible_distribution == "CentOS")
+
+    - name: named master zone configuration file(s)
+      action: template src=ansible/templates/zones.conf-master.j2 dest=/etc/named/zones.conf
+      notify:
+      - restart named
+
+    - name: set zone update key
+      action: template src=ansible/templates/update.key.j2 dest=/etc/named/update.key
+      notify:
+      - restart named
+
+    - name: set zone data file(s)
+      action: template src=ansible/templates/zone.db.j2 dest=/var/named/dynamic/zone.db owner=named group=named
+      tags:
+        - zonedata
+      notify:
+      - restart named
+
+  handlers:
+    - name: restart named
+      systemd: name=named state=restarted
+
+
+- hosts: slaves
+  become: true
+  tasks:
+    - name: named slave zone configuration file(s)
+      action: template src=ansible/templates/zones.conf-slave.j2 dest=/etc/named/zones.conf
+      notify:
+      - restart named
+
+    - name: set zone update key
+      action: template src=ansible/templates/update.key.j2 dest=/etc/named/update.key
+      notify:
+      - restart named
+
+  handlers:
+    - name: restart named
+      systemd: name=named state=restarted
