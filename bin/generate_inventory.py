@@ -5,7 +5,11 @@
 import os,sys,re
 from optparse import OptionParser
 
-from novaclient import client
+from keystoneclient.auth.identity import v3 as ks_v3
+from keystoneclient import session as ks_session
+from keystoneclient.v3 import client as ksclient
+
+from novaclient import client as novaclient
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -13,7 +17,8 @@ def parse_cli():
     opts = OptionParser()
     opts.add_option("-u", "--username", default=os.environ['OS_USERNAME'])
     opts.add_option("-p", "--password", default=os.environ['OS_PASSWORD'])
-    opts.add_option("-P", "--project", default=os.environ['OS_TENANT_NAME'])
+    opts.add_option("-P", "--project", default=os.environ['OS_PROJECT_ID'])
+    opts.add_option("-d", "--user-domain", default=os.environ['OS_USER_DOMAIN'])
     opts.add_option("-U", "--auth-url", default=os.environ['OS_AUTH_URL'])
 
     opts.add_option("-z", "--zone", default="example.com")
@@ -62,12 +67,15 @@ if __name__ == "__main__":
     zone_re = re.compile("\.%s$" % opts.zone)
     master_re = re.compile("^(%s)\.%s" % (opts.master, opts.zone))
     slave_re = re.compile("^(%s)[0-9]\.%s" % (opts.slave_prefix, opts.zone))
-    
-    nova = client.Client("2.0",
-                         opts.username,
-                         opts.password,
-                         opts.project,
-                         opts.auth_url)
+
+    auth = ks_v3.Password(auth_url=opts.auth_url,
+                       username=opts.username,
+                       password=opts.password
+                       user_domain_name=opts.user_domain,
+                       project_id=opts.project_id)
+    sess = ks_session.Session(auth=auth)
+    keystone = ksclient.Client(session=sess)
+    nova = novaclient.Client(2, session=keystone.session)
 
     # get a list of the server/floating IP pairs in the project
     servers = [floating_ip(server, opts.network)
