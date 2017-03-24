@@ -17,8 +17,8 @@ def parse_cli():
     opts = OptionParser()
     opts.add_option("-u", "--username", default=os.environ['OS_USERNAME'])
     opts.add_option("-p", "--password", default=os.environ['OS_PASSWORD'])
-    opts.add_option("-P", "--project", default=os.environ['OS_PROJECT_ID'])
-    opts.add_option("-d", "--user-domain", default=os.environ['OS_USER_DOMAIN'])
+    opts.add_option("-P", "--project-id", default=os.environ['OS_PROJECT_ID'])
+    opts.add_option("-d", "--user-domain", default=os.getenv('OS_USER_DOMAIN_NAME'))
     opts.add_option("-U", "--auth-url", default=os.environ['OS_AUTH_URL'])
 
     opts.add_option("-z", "--zone", default="example.com")
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     auth = ks_v3.Password(auth_url=opts.auth_url,
                        username=opts.username,
-                       password=opts.password
+                       password=opts.password,
                        user_domain_name=opts.user_domain,
                        project_id=opts.project_id)
     sess = ks_session.Session(auth=auth)
